@@ -42,3 +42,28 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
     }
     return halfred.parse(await res.json());
 }
+
+
+// For suspend creator action
+export async function postHalAction(
+    path: string,
+    authProvider: { getAuth: () => Promise<string | null> }
+) {
+    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+    const authorization = await authProvider.getAuth();
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Accept": "application/hal+json",
+            ...(authorization ? { Authorization: authorization } : {}),
+        },
+        cache: "no-store",
+    });
+
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status} posting action`);
+    }
+
+    return halfred.parse(await res.json());
+}
