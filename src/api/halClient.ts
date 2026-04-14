@@ -50,5 +50,11 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`)
     }
-    return halfred.parse(await res.json());
+    const responseText = await res.text();
+    if (!responseText.trim()) {
+        return {
+            uri: res.headers.get("Location") ?? undefined,
+        } as Resource;
+    }
+    return halfred.parse(JSON.parse(responseText));
 }
