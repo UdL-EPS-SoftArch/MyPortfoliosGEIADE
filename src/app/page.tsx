@@ -11,21 +11,21 @@ export default function Home() {
             MyPortfolios Frontend
           </h1>
           <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Temporary frontend workspace with direct access to administration views while the portfolio flow is still pending.
+            Frontend workspace for logging in and managing projects inside your own portfolios.
           </p>
         </div>
 
         <div className="grid w-full gap-4">
           <Card className="w-full">
             <CardHeader>
-              <CardTitle>Projects Admin</CardTitle>
+              <CardTitle>Projects</CardTitle>
               <CardDescription>
-                Temporary admin view to create projects directly and list the existing ones from the backend API.
+                Open your projects page to create projects and assign each one to one of your portfolios.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild>
-                <Link href="/admin/projects">Open Projects Admin</Link>
+                <Link href="/projects">Open Projects</Link>
               </Button>
             </CardContent>
           </Card>

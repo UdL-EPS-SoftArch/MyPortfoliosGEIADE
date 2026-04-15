@@ -39,7 +39,7 @@ export default function LoginPage() {
 
     const onSubmit: SubmitHandler<FormValues> = (data) => {
         login(data.username, data.password).then(() => {
-            router.push(`/users/${data.username}`);
+            router.push("/projects");
         }).catch(() => {
             deleteCookie("MYCOFFEE_AUTH");
             setErrorMessage("Login failed");

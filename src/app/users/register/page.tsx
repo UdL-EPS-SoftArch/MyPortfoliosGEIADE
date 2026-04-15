@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { User } from "@/types/user";
 import {UsersService} from "@/api/userApi";
-import {clientAuthProvider} from "@/lib/authProvider";
+import {anonymousAuthProvider} from "@/lib/authProvider";
 
 type FormValues = {
     username: string;
@@ -18,7 +18,7 @@ type FormValues = {
 };
 
 export default function RegistrationPage() {
-    const service = new UsersService(clientAuthProvider())
+    const service = new UsersService(anonymousAuthProvider)
     const {
         register,
         handleSubmit,

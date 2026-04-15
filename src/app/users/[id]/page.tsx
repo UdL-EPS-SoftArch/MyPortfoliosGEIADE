@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {UsersService} from "@/api/userApi";
 import {serverAuthProvider} from "@/lib/authProvider";
 import {Record} from "@/types/record";
@@ -8,6 +9,12 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 export default async function UsersPage(props: { params: Promise<{ id: string }> }) {
     const userService = new UsersService(serverAuthProvider)
     const recordService = new RecordService(serverAuthProvider)
+    const currentUser = await userService.getCurrentUser();
+
+    if (!currentUser) {
+        redirect("/login");
+    }
+
     const user = await userService.getUserById((await props.params).id);
     let records: Record[] = [];
     try {

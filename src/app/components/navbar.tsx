@@ -13,7 +13,8 @@ export default function Navbar() {
     const navLinks = [
         {href: "/", label: "Home"},
         {href: "/users", label: "Users", roles: ["ROLE_USER"]},
-        {href: "/admin/projects", label: "Projects Admin"}
+        {href: "/projects", label: "Projects", roles: ["ROLE_USER"]},
+        {href: "/projects/explore", label: "Explore Projects"}
     ];
 
     return (

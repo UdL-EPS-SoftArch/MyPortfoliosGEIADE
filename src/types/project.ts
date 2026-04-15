@@ -9,6 +9,7 @@ export interface ProjectEntity {
     created?: Date;
     modified?: Date;
     visibility?: Visibility;
+    portfolio?: string;
 }
 
 export type Project = ProjectEntity & Resource;

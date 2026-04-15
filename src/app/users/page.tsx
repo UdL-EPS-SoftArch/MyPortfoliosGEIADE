@@ -1,9 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {UsersService} from "@/api/userApi";
 import {serverAuthProvider} from "@/lib/authProvider";
 
 export default async function UsersPage() {
     const service = new UsersService(serverAuthProvider)
+    const currentUser = await service.getCurrentUser();
+
+    if (!currentUser) {
+        redirect("/login");
+    }
+
     const users = await service.getUsers();
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
