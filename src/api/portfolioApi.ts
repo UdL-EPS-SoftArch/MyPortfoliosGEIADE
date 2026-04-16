@@ -1,12 +1,14 @@
 import { getHal, mergeHalArray } from "./halClient";
-import { clientAuthProvider } from "@/lib/authProvider";
+import { type AuthProvider } from '@/lib/authProvider';
+import { Portfolio } from '@/types/portfolio';
 
 export class PortfolioService {
-  private auth = clientAuthProvider();
+  constructor(private authProvider: AuthProvider) {
+  }
 
-  async getPortfolios() {
-    const resource = await getHal("/portfolios", clientAuthProvider());
+  async getPortfolios(): Promise<Portfolio[]> {
+    const resource = await getHal("/portfolios", this.authProvider);
     const embedded = resource.embeddedArray("portfolios") || [];
-    return mergeHalArray<any>(embedded);
+    return mergeHalArray<Portfolio>(embedded);
   }
 }
