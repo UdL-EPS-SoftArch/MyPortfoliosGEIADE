@@ -13,6 +13,7 @@ import { faUser } from "@fortawesome/free-solid-svg-icons";
 
 export default function Loginbar() {
     const router = useRouter();
+    const { user, setUser } = useAuth();
 
     function logout() {
         deleteCookie("MYCOFFEE_AUTH");
@@ -20,54 +21,86 @@ export default function Loginbar() {
         router.push("/");
     }
 
-    const {user, setUser} = useAuth();
-
     useEffect(() => {
         let mounted = true;
 
         async function load() {
             try {
                 const service = new UsersService(clientAuthProvider());
-                const user = await service.getCurrentUser();
-                setUser(user ?? null);
+                const currentUser = await service.getCurrentUser();
+
+                if (mounted) {
+                    setUser(currentUser ?? null);
+                }
             } catch {
                 if (mounted) setUser(null);
             }
         }
 
         load();
+
         return () => {
             mounted = false;
         };
     }, []);
 
-    if (user) {
+    const roles = user?.authorities?.map(a => a.authority) ?? [];
+    const isCreator = roles.includes("ROLE_CREATOR");
+    const isAdmin = roles.includes("ROLE_ADMIN");
+
+    if (!user) {
         return (
-            <div className="flex items-center gap-5">
-                <div className="flex items-center gap-2">
-                    <Avatar className="rounded-lg flex items-center justify-center bg-gray-200">
-                        <FontAwesomeIcon icon={faUser} className="h-4 w-4"/>
-                    </Avatar>
-                    <Link href={`/users/${user.username}`}
-                          className="text-blue-600 text-md font-medium"> {user.username ?? "User"} </Link>
-                </div>
-                <button
-                    onClick={logout}
+            <div className="flex items-center gap-2">
+                <Link
+                    href="/login"
                     className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
                 >
-                    Logout
-                </button>
+                    Login
+                </Link>
+
+                <Link
+                    href="/users/register"
+                    className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                >
+                    Register
+                </Link>
             </div>
         );
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <Link href="/login"
-                  className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"> Login </Link>
-            <Link href="/users/register"
-                  className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"> Register </Link>
-        </div>
-    )
+        <div className="flex items-center gap-5">
+            <div className="flex items-center gap-2">
+                <Avatar className="rounded-lg flex items-center justify-center bg-gray-200">
+                    <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
+                </Avatar>
 
+                {isAdmin ? (
+                    <span className="text-md font-medium text-gray-500">
+                        {user.username ?? "Admin"}
+                    </span>
+                ) : (
+                    <Link
+                        href={`/profile}`}
+                        className="text-blue-600 text-md font-medium"
+                    >
+                        {user.username ?? "User"}
+                    </Link>
+                )}
+
+                {isCreator && (
+                    <span className="ml-2 text-xs px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                        CREATOR
+                    </span>
+                )}
+            </div>
+
+            <button
+                onClick={logout}
+                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+            >
+                Logout
+            </button>
+        </div>
+    );
 }

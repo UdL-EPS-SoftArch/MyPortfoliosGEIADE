@@ -67,3 +67,32 @@ export async function postHalAction(
 
     return halfred.parse(await res.json());
 }
+
+export async function putHal(
+    path: string,
+    body: Resource,
+    authProvider: { getAuth: () => Promise<string | null> }
+) {
+    const url = path.startsWith("http")
+        ? path
+        : `${API_BASE_URL}${path}`;
+
+    const authorization = await authProvider.getAuth();
+
+    const res = await fetch(url, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/hal+json",
+            ...(authorization ? { Authorization: authorization } : {}),
+        },
+        body: JSON.stringify(body),
+        cache: "no-store",
+    });
+
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status} putting ${JSON.stringify(body)}`);
+    }
+
+    return halfred.parse(await res.json());
+}
