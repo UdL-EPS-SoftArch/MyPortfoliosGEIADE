@@ -120,12 +120,7 @@ export default function Home() {
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6">
-            <Card href={`/creators/${user.username}`}>
-              <h2 className="font-semibold">My Profile</h2>
-              <p className="text-sm text-zinc-500 mt-1">
-                View your profile
-              </p>
-            </Card>
+           
 
             <Card href="/creators/content">
               <h2 className="font-semibold">My Content</h2>

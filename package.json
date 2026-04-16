@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -28,6 +30,8 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "vite": "^7.2.2",
+    "vitest": "^4.0.6",
     "@tailwindcss/postcss": "^4",
     "@types/halfred": "^2.0.3",
     "@types/node": "^20",
