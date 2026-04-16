@@ -81,7 +81,7 @@ export default function Loginbar() {
                     </span>
                 ) : (
                     <Link
-                        href={`/profile}`}
+                        href={`/profile`}
                         className="text-blue-600 text-md font-medium"
                     >
                         {user.username ?? "User"}

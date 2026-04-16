@@ -18,9 +18,16 @@ export class ProfileService {
         return mergeHal<Profile>(resource);
     }
 
-    async updateMyProfile(profile: Profile): Promise<Profile> {
-        const resource = await putHal("/me/profile", profile, this.authProvider);
-        return mergeHal<Profile>(resource);
+    async updateMyProfile(profile: any): Promise<any> {
+
+        const payload = {
+            description: profile.description,
+            visibility: profile.visibility,
+        };
+    
+        const resource = await putHal("/me/profile", payload, this.authProvider);
+    
+        return mergeHal(resource);
     }
 
     async getProfileById(id: number): Promise<Profile> {
