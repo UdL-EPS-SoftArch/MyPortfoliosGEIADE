@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ProjectsService } from "@/api/projectApi";
 import { PortfolioService } from "@/api/portfolioApi";
 import { UsersService } from "@/api/userApi";
@@ -8,6 +8,7 @@ import { serverAuthProvider } from "@/lib/authProvider";
 import { Project, ProjectEntity } from "@/types/project";
 import { Portfolio, PortfolioEntity } from "@/types/portfolio";
 import ProjectForm from "../admin/projects/project-form";
+import ProjectGroupsManager from "./project-groups-manager";
 
 export default async function ProjectsPage() {
     const projectsService = new ProjectsService(serverAuthProvider);
@@ -81,51 +82,7 @@ export default async function ProjectsPage() {
                             </CardContent>
                         </Card>
                     ) : (
-                        <div className="space-y-3 w-full">
-                            {plainProjectGroups.map(({ portfolio, projects }) => (
-                                <Card key={portfolio.uri} className="w-full">
-                                    <CardHeader>
-                                        <CardTitle>{portfolio.name}</CardTitle>
-                                        <CardDescription>
-                                            Portfolio visibility: {portfolio.visibility ?? "PRIVATE"}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3">
-                                        {projects.length === 0 ? (
-                                            <p className="text-sm text-gray-500">
-                                                No projects inside this portfolio yet.
-                                            </p>
-                                        ) : (
-                                            projects.map((project, index) => (
-                                                <div
-                                                    key={project.uri ?? `${portfolio.uri}-${index}`}
-                                                    className="rounded-lg border p-4"
-                                                >
-                                                    <div className="space-y-1">
-                                                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                                                            {project.name}
-                                                        </p>
-                                                        {project.description && (
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                                {project.description}
-                                                            </p>
-                                                        )}
-                                                        <p className="text-sm text-gray-500">
-                                                            Visibility: {project.visibility ?? "PUBLIC"}
-                                                        </p>
-                                                        {project.created && (
-                                                            <p className="text-sm text-gray-500">
-                                                                Created: {new Date(project.created).toLocaleString()}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        <ProjectGroupsManager projectGroups={plainProjectGroups} />
                     )}
                 </section>
             </main>

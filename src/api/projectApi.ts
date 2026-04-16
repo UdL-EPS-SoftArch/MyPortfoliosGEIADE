@@ -1,4 +1,4 @@
-import { getHal, mergeHal, mergeHalArray, postHal } from "./halClient";
+import { deleteHal, getHal, mergeHal, mergeHalArray, patchHal, postHal } from "./halClient";
 import type { AuthProvider } from "@/lib/authProvider";
 import { Project } from "@/types/project";
 import { Portfolio } from "@/types/portfolio";
@@ -33,5 +33,14 @@ export class ProjectsService {
     async createProject(project: Project): Promise<Project> {
         const resource = await postHal("/projects", project, this.authProvider);
         return mergeHal<Project>(resource);
+    }
+
+    async updateProject(id: string, project: Partial<Project>): Promise<Project> {
+        const resource = await patchHal(`/projects/${id}`, project as Project, this.authProvider);
+        return mergeHal<Project>(resource);
+    }
+
+    async deleteProject(id: string): Promise<void> {
+        await deleteHal(`/projects/${id}`, this.authProvider);
     }
 }

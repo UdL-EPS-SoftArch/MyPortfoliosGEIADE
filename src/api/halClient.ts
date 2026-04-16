@@ -58,3 +58,54 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
     }
     return halfred.parse(JSON.parse(responseText));
 }
+
+export async function patchHal(path: string, body: Resource, authProvider: { getAuth: () => Promise<string | null> }) {
+    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+    const authorization = await authProvider.getAuth();
+    let res: Response;
+    try {
+        res = await fetch(url, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/hal+json",
+                ...(authorization ? { Authorization: authorization } : {}),
+            },
+            body: JSON.stringify(body),
+            cache: "no-store",
+        });
+    } catch {
+        throw new Error(`Could not connect to API at ${url}. Make sure the backend server is running.`);
+    }
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status} patching ${JSON.stringify(body)}`);
+    }
+    const responseText = await res.text();
+    if (!responseText.trim()) {
+        return {
+            uri: res.headers.get("Location") ?? undefined,
+        } as Resource;
+    }
+    return halfred.parse(JSON.parse(responseText));
+}
+
+export async function deleteHal(path: string, authProvider: { getAuth: () => Promise<string | null> }) {
+    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+    const authorization = await authProvider.getAuth();
+    let res: Response;
+    try {
+        res = await fetch(url, {
+            method: "DELETE",
+            headers: {
+                "Accept": "application/hal+json",
+                ...(authorization ? { Authorization: authorization } : {}),
+            },
+            cache: "no-store",
+        });
+    } catch {
+        throw new Error(`Could not connect to API at ${url}. Make sure the backend server is running.`);
+    }
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status} deleting ${url}`);
+    }
+}
