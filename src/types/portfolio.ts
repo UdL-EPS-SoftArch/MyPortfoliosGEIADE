@@ -7,6 +7,7 @@ export interface PortfolioEntity {
     name: string;
     description?: string;
     visibility?: PortfolioVisibility;
+    ownerName?: string;
     created?: Date;
     modified?: Date;
 }

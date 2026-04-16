@@ -10,23 +10,36 @@ export default async function ExploreProjectsPage() {
     const projectsService = new ProjectsService(anonymousAuthProvider);
     const portfolioService = new PortfolioService(anonymousAuthProvider);
     let portfolios: Portfolio[] = [];
-    let projectGroups: Array<{ portfolio: Portfolio; projects: Project[] }> = [];
+    let projectGroups: Array<{ portfolio: Portfolio; ownerName?: string; projects: Project[] }> = [];
 
     try {
         portfolios = await portfolioService.getPublicPortfolios();
         projectGroups = await Promise.all(
-            portfolios.map(async (portfolio) => ({
-                portfolio,
-                projects: await projectsService.getPublicProjectsByPortfolio(portfolio),
-            })),
+            portfolios.map(async (portfolio) => {
+                const projects = await projectsService.getPublicProjectsByPortfolio(portfolio);
+                let ownerName: string | undefined;
+
+                try {
+                    const owner = await portfolioService.getPortfolioOwner(portfolio);
+                    ownerName = owner.username;
+                } catch {
+                    ownerName = undefined;
+                }
+
+                return {
+                    portfolio,
+                    ownerName,
+                    projects,
+                };
+            }),
         );
     } catch (error) {
         console.log(error);
     }
 
     const plainProjectGroups: Array<{ portfolio: PortfolioEntity; projects: ProjectEntity[] }> = projectGroups.map(
-        ({ portfolio, projects }) => ({
-            portfolio: toPlainPortfolio(portfolio),
+        ({ portfolio, ownerName, projects }) => ({
+            portfolio: toPlainPortfolio(portfolio, ownerName),
             projects: projects.map(toPlainProject),
         }),
     );
@@ -66,6 +79,9 @@ export default async function ExploreProjectsPage() {
                                     <CardHeader>
                                         <CardTitle>{portfolio.name}</CardTitle>
                                         <CardDescription>
+                                            {portfolio.ownerName
+                                                ? `Owner: ${portfolio.ownerName} | `
+                                                : ""}
                                             Portfolio visibility: {portfolio.visibility ?? "PUBLIC"}
                                         </CardDescription>
                                     </CardHeader>
@@ -112,12 +128,13 @@ export default async function ExploreProjectsPage() {
     );
 }
 
-function toPlainPortfolio(portfolio: Portfolio): PortfolioEntity {
+function toPlainPortfolio(portfolio: Portfolio, ownerName?: string): PortfolioEntity {
     return {
         uri: portfolio.uri,
         name: portfolio.name,
         description: portfolio.description,
         visibility: portfolio.visibility,
+        ownerName,
         created: portfolio.created,
         modified: portfolio.modified,
     };
