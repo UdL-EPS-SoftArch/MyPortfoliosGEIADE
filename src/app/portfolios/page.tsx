@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { PortfolioService } from "@/api/portfolioApi";
+import { Portfolio } from '@/types/portfolio';
 
 export default function PortfoliosPage() {
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<Portfolio[]>([]);
 
     useEffect(() => {
         const service = new PortfolioService();
@@ -22,9 +23,9 @@ export default function PortfoliosPage() {
                 <p>No hay portfolios</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {data.map((p: any, index: number) => (
+                    {data.map((p: Portfolio, index: number) => (
                         <div
-                            key={p._links?.self?.href || index}
+                            key={index}
                             className="border rounded-xl p-4 shadow hover:shadow-lg transition"
                         >
                             <div className="flex justify-between items-center mb-2">
