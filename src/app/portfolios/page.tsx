@@ -3,23 +3,99 @@
 import { useEffect, useState } from "react";
 import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from '@/types/portfolio';
+import { clientAuthProvider } from "@/lib/authProvider"; // ✅ IMPORTANTE
 
 export default function PortfoliosPage() {
     const [data, setData] = useState<Portfolio[]>([]);
-
+    const [showForm, setShowForm] = useState(false);
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [loading, setLoading] = useState(false);
     useEffect(() => {
-        const service = new PortfolioService();
+        const service = new PortfolioService(clientAuthProvider()); // ✅ AQUÍ
 
         service.getPortfolios()
             .then(setData)
             .catch(console.error);
     }, []);
 
+    const handleCreate = async () => {
+        try {
+            setLoading(true);
+
+            const auth = await clientAuthProvider().getAuth(); // 👈 AÑADE ESTO
+
+            const res = await fetch("http://localhost:8080/portfolios", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(auth ? { Authorization: auth } : {}) // 👈 CLAVE
+                },
+                body: JSON.stringify({
+                    name,
+                    description,
+                    visibility: "PUBLIC",
+                    owner: "http://localhost:8080/users/1"
+                })
+            });
+
+            console.log("STATUS:", res.status);
+
+            const text = await res.text();
+            console.log("RESPONSE:", text);
+
+            // 🔥 RECARGAR DATOS
+            const service = new PortfolioService(clientAuthProvider());
+            const portfolios = await service.getPortfolios();
+            setData(portfolios);
+
+            setName("");
+            setDescription("");
+            setShowForm(false);
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Portfolios</h1>
+            <button
+                onClick={() => setShowForm(!showForm)}
+                type="button"
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+                Nuevo Portfolio
+            </button>
+            {showForm && (
+                <div className="mb-6 p-4 border rounded bg-white relative z-50 flex gap-2">
+                    <input
+                        type="text"
+                        placeholder="Nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="border p-2"
+                    />
 
-            {data.length === 0 ? (
+                    <input
+                        type="text"
+                        placeholder="Descripción"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="border p-2"
+                    />
+
+                    <button
+                        type="button" // 👈 MUY IMPORTANTE
+                        onClick={handleCreate}
+                        className="bg-green-500 text-white px-4 py-2 rounded"
+                    >
+                        Crear
+                    </button>
+                </div>
+            )}            {data.length === 0 ? (
                 <p>No hay portfolios</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -60,3 +136,4 @@ export default function PortfoliosPage() {
         </div>
     );
 }
+
