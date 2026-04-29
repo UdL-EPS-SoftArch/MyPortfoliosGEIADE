@@ -34,8 +34,7 @@ export default function PortfoliosPage() {
                 body: JSON.stringify({
                     name,
                     description,
-                    visibility: "PUBLIC",
-                    owner: "http://localhost:8080/users/demo"
+                    visibility: "PUBLIC"
                 })
             });
 
