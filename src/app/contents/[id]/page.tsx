@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { serverAuthProvider } from "@/lib/authProvider";
 import { ContentService } from "@/api/contentApi";
 
@@ -19,7 +20,14 @@ export default async function ContentPage(props: { params: Promise<{ id: string 
             <p className="text-gray-800 whitespace-pre-line leading-relaxed">
                 {content.body}
             </p>
+
+            {/* BOTÓN REPORTAR */}
+            <Link
+                href={`/contents/${id}/report`}
+                className="inline-block mt-6 rounded-full bg-red-600 px-5 py-2 text-white font-medium hover:bg-red-700 transition"
+            >
+                Report this content
+            </Link>
         </div>
     );
 }
-
