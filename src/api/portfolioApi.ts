@@ -11,4 +11,13 @@ export class PortfolioService {
     const embedded = resource.embeddedArray("portfolios") || [];
     return mergeHalArray<Portfolio>(embedded);
   }
+
+  async getPortfoliosByOwner(owner: User): Promise<Portfolio[]> {
+    const resource = await getHal(
+        `/portfolios/search/findByOwner?owner=${owner.uri}`,
+        this.authProvider
+    );
+    const embedded = resource.embeddedArray("portfolios") || [];
+    return mergeHalArray<Portfolio>(embedded);
+}
 }
