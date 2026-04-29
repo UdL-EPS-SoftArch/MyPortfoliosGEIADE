@@ -35,7 +35,7 @@ export default function PortfoliosPage() {
                     name,
                     description,
                     visibility: "PUBLIC",
-                    owner: "http://localhost:8080/users/1"
+                    owner: "http://localhost:8080/users/demo"
                 })
             });
 
