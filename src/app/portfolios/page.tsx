@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from '@/types/portfolio';
-import { clientAuthProvider } from "@/lib/authProvider"; // ✅ IMPORTANTE
+import { clientAuthProvider } from "@/lib/authProvider"; 
 
 export default function PortfoliosPage() {
     const [data, setData] = useState<Portfolio[]>([]);
@@ -12,7 +12,7 @@ export default function PortfoliosPage() {
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
     useEffect(() => {
-        const service = new PortfolioService(clientAuthProvider()); // ✅ AQUÍ
+        const service = new PortfolioService(clientAuthProvider());
 
         service.getPortfolios()
             .then(setData)
@@ -23,13 +23,13 @@ export default function PortfoliosPage() {
         try {
             setLoading(true);
 
-            const auth = await clientAuthProvider().getAuth(); // 👈 AÑADE ESTO
+            const auth = await clientAuthProvider().getAuth(); 
 
             const res = await fetch("http://localhost:8080/portfolios", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(auth ? { Authorization: auth } : {}) // 👈 CLAVE
+                    ...(auth ? { Authorization: auth } : {}) 
                 },
                 body: JSON.stringify({
                     name,
@@ -70,7 +70,7 @@ export default function PortfoliosPage() {
                 Nuevo Portfolio
             </button>
             {showForm && (
-                <div className="mb-6 p-4 border rounded bg-white relative z-50 flex gap-2">
+                <div className="mt-4 mb-6 p-4 border rounded bg-white relative z-50 flex gap-2">
                     <input
                         type="text"
                         placeholder="Nombre"
@@ -95,10 +95,12 @@ export default function PortfoliosPage() {
                         Crear
                     </button>
                 </div>
-            )}            {data.length === 0 ? (
-                <p>No hay portfolios</p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            )}
+            <div className="mt-6">
+                {data.length === 0 ? (
+                    <p>No hay portfolios</p>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {data.map((p: Portfolio, index: number) => (
                         <div
                             key={index}
@@ -131,8 +133,9 @@ export default function PortfoliosPage() {
                             </div>
                         </div>
                     ))}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
