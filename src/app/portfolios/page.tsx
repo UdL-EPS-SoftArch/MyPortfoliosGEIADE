@@ -65,7 +65,7 @@ export default function PortfoliosPage() {
             <button
                 onClick={() => setShowForm(!showForm)}
                 type="button"
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer"
             >
                 Nuevo Portfolio
             </button>
@@ -104,7 +104,7 @@ export default function PortfoliosPage() {
                     {data.map((p: Portfolio, index: number) => (
                         <div
                             key={index}
-                            className="border rounded-xl p-4 shadow hover:shadow-lg transition"
+                            className="border rounded-xl p-4 shadow hover:shadow-lg transition cursor-pointer"
                         >
                             <div className="flex justify-between items-center mb-2">
                                 <h2 className="font-bold text-lg">{p.name}</h2>
