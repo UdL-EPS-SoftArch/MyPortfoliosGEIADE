@@ -4,6 +4,7 @@ import { TagsService } from "@/api/tagApi";
 import { serverAuthProvider } from "@/lib/authProvider";
 import type { Tag } from "@/types/tag";
 import CreateTagToggle from "./CreateTagToggle";
+import DeleteTagButton from "./DeleteTagButton";
 
 async function createTagAction(formData: FormData) {
     "use server";
@@ -23,6 +24,20 @@ async function createTagAction(formData: FormData) {
     } as Tag;
 
     await service.createTag(tag);
+    revalidatePath("/tags");
+}
+
+async function deleteTagAction(formData: FormData) {
+    "use server";
+
+    const tagId = Number(formData.get("tagId"));
+
+    if (!tagId) {
+        return;
+    }
+
+    const service = new TagsService(serverAuthProvider);
+    await service.deleteTag(tagId);
     revalidatePath("/tags");
 }
 
@@ -165,11 +180,20 @@ export default async function TagsPage() {
                                             </p>
                                         )}
 
-                                        {tag.id && (
-                                            <div className="mt-6 border-t border-[#f1ebee] pt-4 text-xs font-medium uppercase tracking-[0.14em] text-[#948c90]">
-                                                ID #{tag.id}
-                                            </div>
-                                        )}
+                                        <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#f1ebee] pt-4">
+                                            {tag.id && (
+                                                <div className="text-xs font-medium uppercase tracking-[0.14em] text-[#948c90]">
+                                                    ID #{tag.id}
+                                                </div>
+                                            )}
+
+                                            {tag.id && (
+                                                <DeleteTagButton
+                                                    action={deleteTagAction}
+                                                    tagId={tag.id}
+                                                />
+                                            )}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>

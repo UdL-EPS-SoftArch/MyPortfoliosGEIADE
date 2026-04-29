@@ -1,4 +1,4 @@
-import { getHal, mergeHal, postHal } from "./halClient";
+import { deleteHal, getHal, mergeHal, postHal, putUriList } from "./halClient";
 import type { AuthProvider } from "@/lib/authProvider";
 import type { Tag } from "@/types/tag";
 
@@ -13,7 +13,7 @@ type HalTag = Tag & {
     id?: number;
 };
 
-type HalContent = {
+export type HalContent = {
     contentId?: number;
     name?: string;
     body?: string;
@@ -124,5 +124,63 @@ export class TagsService {
                     content.contentId ?? (idFromUri ? Number(idFromUri) : undefined),
             };
         });
+    }
+
+    async findAvailableContentsByTagId(tagId: number): Promise<HalContent[]> {
+        const resource = await getHal(
+            `/tags/${tagId}/available-contents`,
+            this.authProvider
+        );
+
+        let embedded = resource.embeddedArray("contents") || [];
+
+        if ((!embedded || embedded.length === 0) && Array.isArray((resource as any)._original)) {
+            embedded = (resource as any)._original;
+        }
+
+        if ((!embedded || embedded.length === 0)) {
+            const numericItems = Object.keys(resource)
+                .filter(k => /^[0-9]+$/.test(k))
+                .map(k => (resource as any)[k]);
+            if (numericItems.length > 0) embedded = numericItems;
+        }
+        
+        const mapped = embedded.map((item: any) => {
+            const content = mergeHal<any>(item) as HalContent;
+
+            const href =
+                item?._links?.self?.href ??
+                content?._links?.self?.href ??
+                item?.link?.("self")?.href;
+
+            const uri =
+                item?.uri ??
+                content?.uri ??
+                (href ? new URL(href).pathname : undefined);
+
+            const idFromUri = uri?.split("/").pop();
+
+            return {
+                ...content,
+                uri,
+                _links: item?._links ?? content?._links,
+                contentId:
+                    content.contentId ?? (idFromUri ? Number(idFromUri) : undefined),
+            };
+        });
+
+        return mapped;
+    }
+
+    async assignContentToTag(tagId: number, contentId: number): Promise<void> {
+        await putUriList(`/contents/${contentId}/tags`, `/tags/${tagId}`, this.authProvider);
+    }
+
+    async removeContentFromTag(tagId: number, contentId: number): Promise<void> {
+        await deleteHal(`/contents/${contentId}/tags/${tagId}`, this.authProvider);
+    }
+
+    async deleteTag(tagId: number): Promise<void> {
+        await deleteHal(`/tags/${tagId}/delete`, this.authProvider);
     }
 }
