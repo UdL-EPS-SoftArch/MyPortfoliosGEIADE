@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from '@/types/portfolio';
-import { clientAuthProvider } from "@/lib/authProvider";
+import { clientAuthProvider } from '@/lib/authProvider';
 
 export default function PortfoliosPage() {
     const [data, setData] = useState<Portfolio[]>([]);
@@ -101,7 +101,7 @@ export default function PortfoliosPage() {
                     />
 
                     <button
-                        type="button" 
+                        type="button"
                         onClick={handleCreate}
                         className="bg-green-500 text-white px-4 py-2 rounded"
                     >
@@ -152,4 +152,3 @@ export default function PortfoliosPage() {
         </div>
     );
 }
-
