@@ -120,12 +120,7 @@ export default function Home() {
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6">
-            <Card href={`/creators/${user.username}`}>
-              <h2 className="font-semibold">My Profile</h2>
-              <p className="text-sm text-zinc-500 mt-1">
-                View your profile
-              </p>
-            </Card>
+           
 
             <Card href="/creators/content">
               <h2 className="font-semibold">My Content</h2>
@@ -139,21 +134,5 @@ export default function Home() {
     );
   }
 
-  // 👤 USER DEFAULT
-  return (
-    <Page>
-      <div className="flex flex-col items-center text-center py-16">
-        <h1 className="text-3xl font-bold">
-          Hello {user.username}
-        </h1>
 
-        <Link
-          href={`/users/${user.username}`}
-          className="mt-6 px-5 py-2.5 bg-blue-600 text-white rounded-lg"
-        >
-          Go to profile
-        </Link>
-      </div>
-    </Page>
-  );
 }
