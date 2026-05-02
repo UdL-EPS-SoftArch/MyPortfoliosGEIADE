@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from '@/types/portfolio';
+import { clientAuthProvider } from '@/lib/authProvider';
 
 export default function PortfoliosPage() {
     const [data, setData] = useState<Portfolio[]>([]);
 
     useEffect(() => {
-        const service = new PortfolioService();
+        const service = new PortfolioService(clientAuthProvider());
 
         service.getPortfolios()
             .then(setData)

@@ -1,4 +1,4 @@
-import { getHal, mergeHal, postHal, putHal } from "./halClient";
+import { getHal, mergeHal, putHal } from "./halClient";
 import type { AuthProvider } from "@/lib/authProvider";
 import { Resource } from "halfred";
 
@@ -18,15 +18,8 @@ export class ProfileService {
         return mergeHal<Profile>(resource);
     }
 
-    async updateMyProfile(profile: any): Promise<any> {
-
-        const payload = {
-            description: profile.description,
-            visibility: profile.visibility,
-        };
-    
-        const resource = await putHal("/me/profile", payload, this.authProvider);
-    
+    async updateMyProfile(profile: Profile): Promise<Profile> {
+        const resource = await putHal("profiles/{id}", profile, this.authProvider);
         return mergeHal(resource);
     }
 

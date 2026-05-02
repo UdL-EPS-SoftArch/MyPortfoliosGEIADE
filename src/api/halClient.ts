@@ -1,6 +1,6 @@
 import halfred, {Resource} from "halfred";
 
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:8080";
 
 export function mergeHal<T>(obj: Resource): (T & Resource) {
     return Object.assign(obj, halfred.parse(obj)) as T & Resource;
@@ -40,13 +40,9 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`)
     }
-
+    // Si el body és buit (ex: 201 Created sense body), retornem un Resource buit
     const text = await res.text();
-    if (!text || !text.trim()) {
-        return halfred.parse({});
-    }
-
-    return halfred.parse(JSON.parse(text));
+    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
 }
 
 
