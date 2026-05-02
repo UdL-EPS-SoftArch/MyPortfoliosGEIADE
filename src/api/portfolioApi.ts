@@ -1,6 +1,7 @@
 import { getHal, mergeHalArray } from "./halClient";
 import { type AuthProvider } from '@/lib/authProvider';
 import { Portfolio } from '@/types/portfolio';
+import { User } from '@/types/user';
 
 export class PortfolioService {
   constructor(private authProvider: AuthProvider) {
