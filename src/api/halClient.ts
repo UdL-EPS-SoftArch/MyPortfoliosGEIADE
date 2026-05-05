@@ -33,12 +33,14 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
         headers: {
             "Content-Type": "application/json",
             "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}), },
+            ...(authorization ? { Authorization: authorization } : {}),
+        },
         body: JSON.stringify(body),
         cache: "no-store",
     });
     if (!res.ok) {
-        throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`)
+        throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`);
     }
-    return halfred.parse(await res.json());
+    const text = await res.text();
+    return halfred.parse(text ? JSON.parse(text) : {});
 }

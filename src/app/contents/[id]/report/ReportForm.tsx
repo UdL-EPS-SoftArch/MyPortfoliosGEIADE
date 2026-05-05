@@ -27,8 +27,7 @@ export default function ReportForm({ id }: { id: string }) {
         try {
             const payload = {
                 reason,
-                createdAt: new Date().toISOString(),
-                content: `/contents/${id}`,
+                content: `http://localhost:8080/contents/${id}`,
             };
 
             await reportService.createReport(payload as any);
