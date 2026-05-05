@@ -1,13 +1,24 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { TagsService } from "@/api/tagApi";
+import { UsersService } from "@/api/userApi";
 import { serverAuthProvider } from "@/lib/authProvider";
 import type { Tag } from "@/types/tag";
 import CreateTagToggle from "./CreateTagToggle";
 import DeleteTagButton from "./DeleteTagButton";
 
+async function isCurrentUserAdmin() {
+    const userService = new UsersService(serverAuthProvider);
+    const user = await userService.getCurrentUser();
+    return user?.authorities?.some((a) => a.authority === "ROLE_ADMIN") ?? false;
+}
+
 async function createTagAction(formData: FormData) {
     "use server";
+
+    if (!(await isCurrentUserAdmin())) {
+        return;
+    }
 
     const name = String(formData.get("name") ?? "").trim();
     const description = String(formData.get("description") ?? "").trim();
@@ -30,6 +41,10 @@ async function createTagAction(formData: FormData) {
 async function deleteTagAction(formData: FormData) {
     "use server";
 
+    if (!(await isCurrentUserAdmin())) {
+        return;
+    }
+
     const tagId = Number(formData.get("tagId"));
 
     if (!tagId) {
@@ -43,6 +58,7 @@ async function deleteTagAction(formData: FormData) {
 
 export default async function TagsPage() {
     const service = new TagsService(serverAuthProvider);
+    const isAdmin = await isCurrentUserAdmin();
     const tags = await service.getTags();
 
     return (
@@ -75,7 +91,7 @@ export default async function TagsPage() {
                                 </div>
                             </div>
 
-                            <CreateTagToggle />
+                            {isAdmin && <CreateTagToggle />}
                         </div>
                     </div>
 
@@ -187,7 +203,7 @@ export default async function TagsPage() {
                                                 </div>
                                             )}
 
-                                            {tag.id && (
+                                            {isAdmin && tag.id && (
                                                 <DeleteTagButton
                                                     action={deleteTagAction}
                                                     tagId={tag.id}

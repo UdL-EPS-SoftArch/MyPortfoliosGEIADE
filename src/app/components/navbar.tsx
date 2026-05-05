@@ -13,7 +13,7 @@ export default function Navbar() {
     const navLinks = [
         { href: "/", label: "Home" },
         { href: "/users", label: "Users", roles: ["ROLE_USER"] },
-        { href: "/tags", label: "Tags", roles: ["ROLE_USER"] },
+        { href: "/tags", label: "Tags", roles: ["ROLE_USER", "ROLE_ADMIN"] },
         { href: "/portfolios", label: "Portfolio" },
         { href: "/admins", label: "Admins", roles: ["ROLE_ADMIN"] },
         { href: "/creators", label: "Manage creators", roles: ["ROLE_ADMIN"] },
