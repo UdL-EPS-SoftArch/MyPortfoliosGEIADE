@@ -1,11 +1,10 @@
-import { getHal, mergeHal, mergeHalArray, postHal } from "./halClient";
+import { getHal, mergeHal, mergeHalArray, postHal, deleteHal } from "./halClient";
 import type { AuthProvider } from "@/lib/authProvider";
 import type { Content } from "@/types/content";
 import type { User } from "@/types/user";
 
 export class ContentService {
-    constructor(private authProvider: AuthProvider) {
-    }
+    constructor(private authProvider: AuthProvider) {}
 
     async getContents(): Promise<Content[]> {
         const resource = await getHal('/contents', this.authProvider);
@@ -28,6 +27,10 @@ export class ContentService {
     async createContent(content: Content): Promise<Content> {
         const resource = await postHal('/contents', content, this.authProvider);
         return mergeHal<Content>(resource);
+    }
+
+    async deleteContent(id: string): Promise<void> {
+        await deleteHal(`/contents/${id}`, this.authProvider);
     }
 
     async getContentRelation<T>(content: Content, relation: string): Promise<T> {
