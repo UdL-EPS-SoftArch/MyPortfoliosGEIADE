@@ -42,31 +42,10 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`);
     }
-    // Si el body és buit (ex: 201 Created sense body), retornem un Resource buit
     const text = await res.text();
-    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
+    return halfred.parse(text ? JSON.parse(text) : {});
 }
 
-export async function deleteHal(path: string, authProvider: { getAuth: () => Promise<string | null> }) {
-    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
-    const authorization = await authProvider.getAuth();
-
-    const res = await fetch(url, {
-        method: "DELETE",
-        headers: {
-            "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}),
-        },
-        cache: "no-store",
-    });
-
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status} deleting ${url}`);
-    }
-}
-
-
-// For suspend creator action
 export async function postHalAction(
     path: string,
     authProvider: { getAuth: () => Promise<string | null> }
@@ -89,11 +68,6 @@ export async function postHalAction(
 
     const text = await res.text();
     return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
-    if (!text || !text.trim()) {
-        return halfred.parse({});
-    }
-
-    return halfred.parse(JSON.parse(text));
 }
 
 export async function putHal(
@@ -216,7 +190,7 @@ export async function putUriList(
 
     try {
         return halfred.parse(JSON.parse(text));
-    } catch (e) {
+    } catch {
         return halfred.parse({});
     }
 }

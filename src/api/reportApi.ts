@@ -1,4 +1,4 @@
-import { getHal, mergeHal, mergeHalArray, postHal } from "./halClient";
+import { getHal, mergeHal, mergeHalArray, postHal, deleteHal } from "./halClient";
 import type { AuthProvider } from "@/lib/authProvider";
 import type { Report } from "@/types/report";
 
@@ -19,6 +19,10 @@ export class ReportService {
     async createReport(report: Report): Promise<Report> {
         const resource = await postHal("/reports", report, this.authProvider);
         return mergeHal<Report>(resource);
+    }
+
+    async deleteReport(id: string): Promise<void> {
+        await deleteHal(`/reports/${id}`, this.authProvider);
     }
 
     async getReportsByContent(contentId: string): Promise<Report[]> {

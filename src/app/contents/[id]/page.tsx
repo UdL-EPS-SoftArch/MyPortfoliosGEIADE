@@ -3,6 +3,7 @@ import { serverAuthProvider } from "@/lib/authProvider";
 import { ContentService } from "@/api/contentApi";
 import { ReportService } from "@/api/reportApi";
 import ReportList from "./ReportList";
+import DeleteContentButton from "./deleteContentsButton";
 import type { FlatReport } from "@/types/report";
 
 export default async function ContentPage(props: { params: Promise<{ id: string }> }) {
@@ -28,16 +29,19 @@ export default async function ContentPage(props: { params: Promise<{ id: string 
 
                 {/* HEADER */}
                 <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        {content.visibility && (
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                content.visibility === "PUBLIC"
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                    : "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
-                            }`}>
-                                {content.visibility}
-                            </span>
-                        )}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            {content.visibility && (
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                    content.visibility === "PUBLIC"
+                                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                        : "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
+                                }`}>
+                                    {content.visibility}
+                                </span>
+                            )}
+                        </div>
+                        <DeleteContentButton id={id} reports={flatReports} />
                     </div>
                     <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 leading-tight">
                         {content.name}
