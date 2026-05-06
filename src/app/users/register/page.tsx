@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { User } from "@/types/user";
-import {UsersService} from "@/api/userApi";
+import {CreatorService} from "@/api/creatorAPI";
 import {clientAuthProvider} from "@/lib/authProvider";
 
 type FormValues = {
@@ -18,7 +18,7 @@ type FormValues = {
 };
 
 export default function RegistrationPage() {
-    const service = new UsersService(clientAuthProvider())
+    const service = new CreatorService(clientAuthProvider())
     const {
         register,
         handleSubmit,
@@ -28,7 +28,7 @@ export default function RegistrationPage() {
     const router = useRouter();
 
     const onSubmit: SubmitHandler<FormValues> = (data) => {
-        service.createUser(data as User).then(() => {
+        service.createCreator(data as User).then(() => {
             router.push("/login");
         })
     };

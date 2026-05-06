@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from '@/types/portfolio';
-import { clientAuthProvider } from "@/lib/authProvider";
+import { clientAuthProvider } from '@/lib/authProvider';
+import { User } from '@/types/user';
 
 export default function PortfoliosPage() {
     const [data, setData] = useState<Portfolio[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [, setLoading] = useState(false);
 
     useEffect(() => {
         const service = new PortfolioService(clientAuthProvider());
@@ -20,7 +21,7 @@ export default function PortfoliosPage() {
 
             const username = atob(auth.replace("Basic ", "")).split(":")[0];
 
-            service.getPortfoliosByOwner({ uri: `/users/${username}` } as any)
+            service.getPortfoliosByOwner({ uri: `/users/${username}` } as User)
                 .then(setData)
                 .catch(console.error);
         });
@@ -55,7 +56,7 @@ export default function PortfoliosPage() {
                 const auth2 = await clientAuthProvider().getAuth();
                 if (auth2) {
                     const username = atob(auth2.replace("Basic ", "")).split(":")[0];
-                    const portfolios = await service.getPortfoliosByOwner({ uri: `/users/${username}` } as any);
+                    const portfolios = await service.getPortfoliosByOwner({ uri: `/users/${username}` } as User);
                     setData(portfolios);
                 } else {
                     const portfolios = await service.getPortfolios();
@@ -101,7 +102,7 @@ export default function PortfoliosPage() {
                     />
 
                     <button
-                        type="button" 
+                        type="button"
                         onClick={handleCreate}
                         className="bg-green-500 text-white px-4 py-2 rounded"
                     >
@@ -152,4 +153,3 @@ export default function PortfoliosPage() {
         </div>
     );
 }
-
