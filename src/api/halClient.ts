@@ -34,12 +34,13 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
         headers: {
             "Content-Type": "application/json",
             "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}), },
+            ...(authorization ? { Authorization: authorization } : {}),
+        },
         body: JSON.stringify(body),
         cache: "no-store",
     });
     if (!res.ok) {
-        throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`)
+        throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`);
     }
     // Si el body és buit (ex: 201 Created sense body), retornem un Resource buit
     const text = await res.text();
