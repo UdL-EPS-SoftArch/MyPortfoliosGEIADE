@@ -5,7 +5,7 @@ import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from '@/types/portfolio';
 import { clientAuthProvider } from '@/lib/authProvider';
 import { User } from '@/types/user';
-import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical, Pencil, Trash2, X } from "lucide-react";
 
 export default function PortfoliosPage() {
     const [data, setData] = useState<Portfolio[]>([]);
@@ -93,6 +93,11 @@ export default function PortfoliosPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleCloseCreateForm = () => {
+        setShowForm(false);
+        setCreateError("");
     };
 
     const handleDelete = async (portfolio: Portfolio) => {
@@ -209,6 +214,21 @@ export default function PortfoliosPage() {
             {showForm && (
 
                 <div className="mb-8 bg-white border rounded-2xl p-6 shadow-sm">
+                    <div className="mb-5 flex items-center justify-between gap-4">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            Create portfolio
+                        </h2>
+
+                        <button
+                            type="button"
+                            aria-label="Close create portfolio form"
+                            onClick={handleCloseCreateForm}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
                     <div className="flex flex-col md:flex-row gap-4">
 
                         <input
