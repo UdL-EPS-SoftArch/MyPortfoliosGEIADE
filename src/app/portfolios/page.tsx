@@ -13,6 +13,7 @@ export default function PortfoliosPage() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
+    const [createError, setCreateError] = useState("");
     const [, setLoading] = useState(false);
     const [activeMenuHref, setActiveMenuHref] = useState<string | null>(null);
     const [deletingPortfolioHref, setDeletingPortfolioHref] = useState<string | null>(null);
@@ -42,8 +43,14 @@ export default function PortfoliosPage() {
     }, []);
 
     const handleCreate = async () => {
+        if (!name.trim() || !description.trim()) {
+            setCreateError("Name and description are required.");
+            return;
+        }
+
         try {
             setLoading(true);
+            setCreateError("");
 
             const auth = await clientAuthProvider().getAuth();
 
@@ -54,8 +61,8 @@ export default function PortfoliosPage() {
                     ...(auth ? { Authorization: auth } : {})
                 },
                 body: JSON.stringify({
-                    name,
-                    description,
+                    name: name.trim(),
+                    description: description.trim(),
                     visibility
                 })
             });
@@ -78,6 +85,7 @@ export default function PortfoliosPage() {
 
             setName("");
             setDescription("");
+            setVisibility("PUBLIC");
             setShowForm(false);
 
         } catch (err) {
@@ -200,51 +208,65 @@ export default function PortfoliosPage() {
 
             {showForm && (
 
-                <div className="mb-8 bg-white border rounded-2xl p-6 shadow-sm flex flex-col md:flex-row gap-4">
+                <div className="mb-8 bg-white border rounded-2xl p-6 shadow-sm">
+                    <div className="flex flex-col md:flex-row gap-4">
 
-                    <input
-                        type="text"
-                        placeholder="Name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="border rounded-xl p-3 flex-1"
-                    />
+                        <input
+                            type="text"
+                            placeholder="Name"
+                            value={name}
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                setCreateError("");
+                            }}
+                            className="border rounded-xl p-3 flex-1"
+                        />
 
-                    <input
-                        type="text"
-                        placeholder="Description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="border rounded-xl p-3 flex-1"
-                    />
+                        <input
+                            type="text"
+                            placeholder="Description"
+                            value={description}
+                            onChange={(e) => {
+                                setDescription(e.target.value);
+                                setCreateError("");
+                            }}
+                            className="border rounded-xl p-3 flex-1"
+                        />
 
-                    <div className="flex items-center gap-3">
-                        <div className="inline-flex rounded-xl bg-gray-100 p-1">
-                            <button
-                                type="button"
-                                onClick={() => setVisibility("PUBLIC")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PUBLIC" ? "bg-white shadow text-green-700" : "text-gray-600"}`}
-                            >
-                                PUBLIC
-                            </button>
+                        <div className="flex items-center gap-3">
+                            <div className="inline-flex rounded-xl bg-gray-100 p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibility("PUBLIC")}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PUBLIC" ? "bg-white shadow text-green-700" : "text-gray-600"}`}
+                                >
+                                    PUBLIC
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={() => setVisibility("PRIVATE")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PRIVATE" ? "bg-white shadow text-gray-800" : "text-gray-600"}`}
-                            >
-                                PRIVATE
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibility("PRIVATE")}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PRIVATE" ? "bg-white shadow text-gray-800" : "text-gray-600"}`}
+                                >
+                                    PRIVATE
+                                </button>
+                            </div>
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={handleCreate}
+                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-medium transition"
+                        >
+                            Create
+                        </button>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={handleCreate}
-                        className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-medium transition"
-                    >
-                        Create
-                    </button>
+                    {createError && (
+                        <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                            {createError}
+                        </p>
+                    )}
 
                 </div>
 
