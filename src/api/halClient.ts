@@ -23,7 +23,8 @@ export async function getHal(path: string, authProvider: { getAuth: () => Promis
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} fetching ${url}`);
     }
-    return halfred.parse(await res.json());
+    const text = await res.text();
+    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
 }
 
 export async function postHal(path: string, body: Resource, authProvider: { getAuth: () => Promise<string | null> }) {
@@ -43,7 +44,7 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
         throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`);
     }
     const text = await res.text();
-    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
+    return halfred.parse(text ? JSON.parse(text) : {});
 }
 
 export async function postHalAction(
@@ -67,11 +68,7 @@ export async function postHalAction(
     }
 
     const text = await res.text();
-    if (!text || !text.trim()) {
-        return halfred.parse({});
-    }
-
-    return halfred.parse(JSON.parse(text));
+    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
 }
 
 export async function putHal(
