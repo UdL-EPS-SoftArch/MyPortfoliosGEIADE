@@ -11,6 +11,7 @@ export default function PortfoliosPage() {
     const [showForm, setShowForm] = useState(false);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
     const [, setLoading] = useState(false);
 
     useEffect(() => {
@@ -43,7 +44,7 @@ export default function PortfoliosPage() {
                 body: JSON.stringify({
                     name,
                     description,
-                    visibility: "PUBLIC"
+                    visibility
                 })
             });
 
@@ -107,7 +108,7 @@ export default function PortfoliosPage() {
                         type="button"
                         className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-xl font-medium shadow-sm transition cursor-pointer"
                     >
-                        Nuevo Portfolio
+                        New Portfolio
                     </button>
 
                 </div>
@@ -133,6 +134,26 @@ export default function PortfoliosPage() {
                         onChange={(e) => setDescription(e.target.value)}
                         className="border rounded-xl p-3 flex-1"
                     />
+
+                    <div className="flex items-center gap-3">
+                        <div className="inline-flex rounded-xl bg-gray-100 p-1">
+                            <button
+                                type="button"
+                                onClick={() => setVisibility("PUBLIC")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PUBLIC" ? "bg-white shadow text-green-700" : "text-gray-600"}`}
+                            >
+                                PUBLIC
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setVisibility("PRIVATE")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PRIVATE" ? "bg-white shadow text-gray-800" : "text-gray-600"}`}
+                            >
+                                PRIVATE
+                            </button>
+                        </div>
+                    </div>
 
                     <button
                         type="button"
