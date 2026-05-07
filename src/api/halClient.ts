@@ -23,7 +23,8 @@ export async function getHal(path: string, authProvider: { getAuth: () => Promis
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} fetching ${url}`);
     }
-    return halfred.parse(await res.json());
+    const text = await res.text();
+    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
 }
 
 export async function postHal(path: string, body: Resource, authProvider: { getAuth: () => Promise<string | null> }) {
@@ -44,6 +45,24 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
     // Si el body és buit (ex: 201 Created sense body), retornem un Resource buit
     const text = await res.text();
     return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
+}
+
+export async function deleteHal(path: string, authProvider: { getAuth: () => Promise<string | null> }) {
+    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+    const authorization = await authProvider.getAuth();
+
+    const res = await fetch(url, {
+        method: "DELETE",
+        headers: {
+            "Accept": "application/hal+json",
+            ...(authorization ? { Authorization: authorization } : {}),
+        },
+        cache: "no-store",
+    });
+
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status} deleting ${url}`);
+    }
 }
 
 
@@ -68,7 +87,8 @@ export async function postHalAction(
         throw new Error(`HTTP ${res.status} posting action`);
     }
 
-    return halfred.parse(await res.json());
+    const text = await res.text();
+    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
 }
 
 export async function putHal(
