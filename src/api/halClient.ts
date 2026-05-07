@@ -1,3 +1,4 @@
+
 import halfred, {Resource} from "halfred";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:8080";
@@ -41,13 +42,10 @@ export async function postHal(path: string, body: Resource, authProvider: { getA
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`);
     }
-    // Si el body és buit (ex: 201 Created sense body), retornem un Resource buit
     const text = await res.text();
     return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
 }
 
-
-// For suspend creator action
 export async function postHalAction(
     path: string,
     authProvider: { getAuth: () => Promise<string | null> }
@@ -123,12 +121,10 @@ export async function deleteHal(
     const res = await fetch(url, {
         method: "DELETE",
         headers: {
-            "Accept": "application/hal+json",
             ...(authorization ? { Authorization: authorization } : {}),
         },
         cache: "no-store",
     });
-
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} deleting ${url}`);
     }
@@ -159,7 +155,7 @@ export async function putUriList(
         return trimmed.startsWith("http") ? trimmed : `${API_BASE_URL}${trimmed.startsWith("/") ? trimmed : "/" + trimmed}`;
     };
 
-    let bodyText = "";
+    let bodyText;
     if (Array.isArray(uris)) {
         bodyText = uris.map(makeAbsolute).filter(Boolean).join("\n");
     } else {
@@ -196,7 +192,7 @@ export async function putUriList(
 
     try {
         return halfred.parse(JSON.parse(text));
-    } catch (e) {
+    } catch {
         return halfred.parse({});
     }
 }
