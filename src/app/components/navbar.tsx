@@ -30,6 +30,7 @@ export default function Navbar() {
                         alt="Next.js logo"
                         width={80}
                         height={16}
+                        style={{ height: "auto" }}
                         priority
                     /> Template
                 </div>
