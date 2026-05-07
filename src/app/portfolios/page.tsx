@@ -352,7 +352,7 @@ export default function PortfoliosPage() {
                                                     className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${
                                                         p.visibility === "PUBLIC"
                                                             ? "bg-green-100 text-green-700"
-                                                            : "bg-gray-200 text-gray-700"
+                                                            : "bg-blue-100 text-blue-700"
                                                     }`}
                                                 >
                                                     {p.visibility}
