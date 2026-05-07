@@ -266,7 +266,7 @@ export default function PortfoliosPage() {
                                 <button
                                     type="button"
                                     onClick={() => setVisibility("PRIVATE")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PRIVATE" ? "bg-white shadow text-gray-800" : "text-gray-600"}`}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PRIVATE" ? "bg-white shadow text-blue-700" : "text-gray-600"}`}
                                 >
                                     PRIVATE
                                 </button>
