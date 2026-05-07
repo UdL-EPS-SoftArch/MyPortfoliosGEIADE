@@ -117,12 +117,10 @@ export async function deleteHal(
     const res = await fetch(url, {
         method: "DELETE",
         headers: {
-            "Accept": "application/hal+json",
             ...(authorization ? { Authorization: authorization } : {}),
         },
         cache: "no-store",
     });
-
     if (!res.ok) {
         throw new Error(`HTTP ${res.status} deleting ${url}`);
     }
