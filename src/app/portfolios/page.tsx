@@ -204,7 +204,7 @@ export default function PortfoliosPage() {
 
                     <input
                         type="text"
-                        placeholder="Nombre"
+                        placeholder="Name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="border rounded-xl p-3 flex-1"
@@ -212,7 +212,7 @@ export default function PortfoliosPage() {
 
                     <input
                         type="text"
-                        placeholder="Descripción"
+                        placeholder="Description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         className="border rounded-xl p-3 flex-1"
@@ -243,7 +243,7 @@ export default function PortfoliosPage() {
                         onClick={handleCreate}
                         className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-medium transition"
                     >
-                        Crear
+                        Create
                     </button>
 
                 </div>
