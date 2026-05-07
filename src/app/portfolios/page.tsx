@@ -16,6 +16,8 @@ export default function PortfoliosPage() {
     const [createError, setCreateError] = useState("");
     const [, setLoading] = useState(false);
     const [activeMenuHref, setActiveMenuHref] = useState<string | null>(null);
+    const [portfolioToDelete, setPortfolioToDelete] = useState<Portfolio | null>(null);
+    const [deleteError, setDeleteError] = useState("");
     const [deletingPortfolioHref, setDeletingPortfolioHref] = useState<string | null>(null);
     const [editingPortfolioHref, setEditingPortfolioHref] = useState<string | null>(null);
     const [editName, setEditName] = useState("");
@@ -100,25 +102,36 @@ export default function PortfoliosPage() {
         setCreateError("");
     };
 
-    const handleDelete = async (portfolio: Portfolio) => {
-        const href = getPortfolioHref(portfolio);
-        const confirmed = window.confirm(`¿Eliminar el portfolio "${portfolio.name}"?`);
+    const handleOpenDeleteModal = (portfolio: Portfolio) => {
+        setPortfolioToDelete(portfolio);
+        setDeleteError("");
+        setActiveMenuHref(null);
+    };
 
-        if (!confirmed) return;
+    const handleCloseDeleteModal = () => {
+        if (deletingPortfolioHref) return;
+        setPortfolioToDelete(null);
+        setDeleteError("");
+    };
 
+    const handleDelete = async () => {
+        if (!portfolioToDelete) return;
+
+        const href = getPortfolioHref(portfolioToDelete);
         try {
             setDeletingPortfolioHref(href);
-            setActiveMenuHref(null);
+            setDeleteError("");
 
             const service = new PortfolioService(clientAuthProvider());
-            await service.deletePortfolio(portfolio);
+            await service.deletePortfolio(portfolioToDelete);
 
             setData((currentData) =>
                 currentData.filter((item) => getPortfolioHref(item) !== href)
             );
+            setPortfolioToDelete(null);
         } catch (err) {
             console.error(err);
-            window.alert("No se ha podido eliminar el portfolio.");
+            setDeleteError("This portfolio could not be deleted. Please try again.");
         } finally {
             setDeletingPortfolioHref(null);
         }
@@ -352,7 +365,7 @@ export default function PortfoliosPage() {
 
                                         <button
                                             type="button"
-                                            onClick={() => handleDelete(p)}
+                                            onClick={() => handleOpenDeleteModal(p)}
                                             disabled={isDeleting}
                                             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
@@ -470,6 +483,65 @@ export default function PortfoliosPage() {
             )}
 
         </div>
+
+        {portfolioToDelete && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-portfolio-title"
+                    className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                >
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 id="delete-portfolio-title" className="text-xl font-bold text-gray-900">
+                                Delete portfolio
+                            </h2>
+
+                            <p className="mt-2 text-sm text-gray-600">
+                                Are you sure you want to delete "{portfolioToDelete.name}"?
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            aria-label="Close delete confirmation"
+                            onClick={handleCloseDeleteModal}
+                            disabled={Boolean(deletingPortfolioHref)}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {deleteError && (
+                        <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                            {deleteError}
+                        </p>
+                    )}
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={handleCloseDeleteModal}
+                            disabled={Boolean(deletingPortfolioHref)}
+                            className="rounded-xl border px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={Boolean(deletingPortfolioHref)}
+                            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {deletingPortfolioHref ? "Deleting..." : "Delete"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
 
     </div>
 );
