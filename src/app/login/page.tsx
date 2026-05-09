@@ -21,17 +21,18 @@ export default function LoginPage() {
     const router = useRouter();
     const { setUser } = useAuth();
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>();
-    const [ errorMessage, setErrorMessage ] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     async function login(username: string, password: string) {
         setErrorMessage(null);
         const authorization = `Basic ${btoa(`${username}:${password}`)}`;
         setCookie("MYCOFFEE_AUTH", authorization, {
             path: "/",
-            secure: true,
+            secure: window.location.protocol === "https:",
             sameSite: "strict",
             httpOnly: false,
         });
+        localStorage.setItem("MYCOFFEE_AUTH", authorization);
         const service = new UsersService(clientAuthProvider());
         const user = await service.getCurrentUser();
         setUser(user);
@@ -39,9 +40,10 @@ export default function LoginPage() {
 
     const onSubmit: SubmitHandler<FormValues> = (data) => {
         login(data.username, data.password).then(() => {
-            router.push("/projects");
+            router.push("/");
         }).catch(() => {
             deleteCookie("MYCOFFEE_AUTH");
+            localStorage.removeItem("MYCOFFEE_AUTH");
             setErrorMessage("Login failed");
         });
     };
@@ -56,11 +58,11 @@ export default function LoginPage() {
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
-                                {errorMessage && ( // Display error message if present
+                                {errorMessage && (
                                     <p className="text-sm text-red-600 mt-1">{errorMessage}</p>
                                 )}
                                 <div>
-                                    <Label htmlFor="username">Username</Label> {/* Changed htmlFor to username */}
+                                    <Label htmlFor="username">Username</Label>
                                     <Input
                                         id="username"
                                         {...register("username", { required: "Username is required" })}

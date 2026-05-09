@@ -8,13 +8,18 @@ import Loginbar from "@/app/components/loginbar";
 
 export default function Navbar() {
     const pathname = usePathname();
-    const {user} = useAuth();
+    const { user } = useAuth();
 
     const navLinks = [
-        {href: "/", label: "Home"},
-        {href: "/users", label: "Users", roles: ["ROLE_USER"]},
-        {href: "/projects", label: "Projects", roles: ["ROLE_USER"]},
-        {href: "/projects/explore", label: "Explore Projects"}
+        { href: "/", label: "Home" },
+        { href: "/projects", label: "Projects", roles: ["ROLE_USER", "ROLE_CREATOR"] },
+        { href: "/projects/explore", label: "Explore Projects" },
+        { href: "/publicportfolios", label: "Public Portfolios" },
+        { href: "/portfolios", label: "My Portfolios", roles: ["ROLE_USER", "ROLE_CREATOR"] },
+        { href: "/users", label: "Users", roles: ["ROLE_USER", "ROLE_ADMIN"] },
+        { href: "/tags", label: "Tags", roles: ["ROLE_USER", "ROLE_ADMIN"] },
+        { href: "/admins", label: "Admins", roles: ["ROLE_ADMIN"] },
+        { href: "/creators", label: "Manage creators", roles: ["ROLE_ADMIN"] },
     ];
 
     return (
@@ -27,16 +32,17 @@ export default function Navbar() {
                         alt="Next.js logo"
                         width={80}
                         height={16}
+                        style={{ height: "auto" }}
                         priority
                     /> Template
                 </div>
 
                 <div className="flex gap-4">
                     {navLinks
-                        .filter(({roles}) =>
+                        .filter(({ roles }) =>
                             !roles || user?.authorities?.some(
                                 userAuth => roles.includes(userAuth.authority)))
-                        .map(({href, label}) => {
+                        .map(({ href, label }) => {
                             const active = pathname === href;
                             return (
                                 <Link
@@ -55,9 +61,8 @@ export default function Navbar() {
                 </div>
 
                 <div className="ml-auto">
-                    <Loginbar/>
+                    <Loginbar />
                 </div>
-
             </div>
         </nav>
     );
