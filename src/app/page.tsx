@@ -97,24 +97,6 @@ function Hero({
                 {children}
             </div>
 
-            <aside className="rounded-lg border border-slate-200 bg-slate-950 p-6 text-white shadow-sm dark:border-slate-800">
-                <div className="flex items-center gap-3">
-                    <span className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-300">
-                        <Sparkles className="size-5" />
-                    </span>
-                    <div>
-                        <p className="text-sm font-semibold">Workspace overview</p>
-                    </div>
-                </div>
-                <div className="mt-8 grid gap-3">
-                    {["Portfolios", "Projects", "Public discovery"].map((item, index) => (
-                        <div key={item} className="flex items-center justify-between rounded-lg bg-white/8 px-4 py-3">
-                            <span className="text-sm text-slate-200">{item}</span>
-                            <span className="text-sm font-semibold text-emerald-300">0{index + 1}</span>
-                        </div>
-                    ))}
-                </div>
-            </aside>
         </section>
     );
 }
@@ -131,7 +113,7 @@ export default function Home() {
                 <Hero
                     eyebrow="Portfolio platform"
                     title="Build a sharper home for your projects."
-                    description="Create portfolios, group projects, and explore public work from a focused workspace designed for students, creators, and reviewers."
+                    description="Build your portfolio, organize projects, and explore a community of student creators."
                 >
                     <div className="mt-8 flex flex-wrap gap-3">
                         <Link
@@ -229,8 +211,8 @@ export default function Home() {
             <div className="flex flex-col gap-8">
                 <Hero
                     eyebrow="Dashboard"
-                    title="A cleaner launchpad for portfolios and project discovery."
-                    description="Move between your projects, portfolio collections, and public exploration without digging through menus."
+                    title="Build your portfolios and projects easily."
+                    description="Move between your projects, portfolio collections, and public exploration."
                     badge={user.username ?? "Signed in"}
                     badgeTone="slate"
                 >
@@ -280,19 +262,6 @@ export default function Home() {
                     </DashboardCard>
                 </div>
 
-                <section className="grid gap-4 lg:grid-cols-3">
-                    {[
-                        ["Focused", "Primary actions are visible immediately."],
-                        ["Role-aware", "The dashboard adapts for admins, creators, and users."],
-                        ["Discoverable", "Public exploration has equal visual weight."],
-                    ].map(([title, text]) => (
-                        <div key={title} className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                            <BadgeCheck className="mb-3 size-5 text-emerald-600 dark:text-emerald-300" />
-                            <h3 className="font-semibold">{title}</h3>
-                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{text}</p>
-                        </div>
-                    ))}
-                </section>
             </div>
         </Page>
     );

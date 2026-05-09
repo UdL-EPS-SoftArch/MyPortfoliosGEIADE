@@ -92,9 +92,6 @@ export default function ProjectForm({ isAuthenticated, portfolios }: ProjectForm
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                         You need at least one portfolio before creating a project.
                     </p>
-                    <p className="text-sm text-gray-500">
-                        The portfolio frontend is still pending, so create the portfolio from the backend/API first and then come back here.
-                    </p>
                 </CardContent>
             </Card>
         );
