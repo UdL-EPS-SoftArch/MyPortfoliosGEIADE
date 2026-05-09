@@ -1,7 +1,8 @@
-
-import halfred, {Resource} from "halfred";
+import halfred, { Resource } from "halfred";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:8080";
+
+type AuthProviderLike = { getAuth: () => Promise<string | null> };
 
 export function mergeHal<T>(obj: Resource): (T & Resource) {
     return Object.assign(obj, halfred.parse(obj)) as T & Resource;
@@ -11,185 +12,139 @@ export function mergeHalArray<T>(objs: Resource[]): (T & Resource)[] {
     return objs.map(o => Object.assign(o, halfred.parse(o)) as T & Resource);
 }
 
-export async function getHal(path: string, authProvider: { getAuth: () => Promise<string | null> }) {
-    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
-    const authorization = await authProvider.getAuth();
-    const res = await fetch(url, {
-        headers: {
-            "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}), },
-        cache: "no-store",
-    });
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status} fetching ${url}`);
-    }
-    const text = await res.text();
-    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
+function toUrl(path: string) {
+    return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
 }
 
-export async function postHal(path: string, body: Resource, authProvider: { getAuth: () => Promise<string | null> }) {
-    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
-    const authorization = await authProvider.getAuth();
-    const res = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}),
-        },
-        body: JSON.stringify(body),
-        cache: "no-store",
-    });
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status} posting ${JSON.stringify(body)}`);
-    }
+async function parseHalResponse(res: Response): Promise<Resource> {
     const text = await res.text();
-    return halfred.parse(text ? JSON.parse(text) : {});
-}
-
-export async function postHalAction(
-    path: string,
-    authProvider: { getAuth: () => Promise<string | null> }
-) {
-    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
-    const authorization = await authProvider.getAuth();
-
-    const res = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}),
-        },
-        cache: "no-store",
-    });
-
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status} posting action`);
-    }
-
-    const text = await res.text();
-    return text ? halfred.parse(JSON.parse(text)) : halfred.parse({});
-}
-
-export async function putHal(
-    path: string,
-    body: Resource,
-    authProvider: { getAuth: () => Promise<string | null> }
-) {
-    const url = path.startsWith("http")
-        ? path
-        : `${API_BASE_URL}${path}`;
-
-    const authorization = await authProvider.getAuth();
-
-    const res = await fetch(url, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}),
-        },
-        body: JSON.stringify(body),
-        cache: "no-store",
-    });
-
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status} putting ${JSON.stringify(body)}`);
-    }
-
-    const text = await res.text();
-    if (!text || !text.trim()) {
-        return halfred.parse({});
+    if (!text.trim()) {
+        return {
+            uri: res.headers.get("Location") ?? undefined,
+        } as unknown as Resource;
     }
 
     return halfred.parse(JSON.parse(text));
 }
 
-export async function deleteHal(
+async function requestHal(
     path: string,
-    authProvider: { getAuth: () => Promise<string | null> }
+    authProvider: AuthProviderLike,
+    init: RequestInit,
+    errorContext: string
 ) {
-    const url = path.startsWith("http")
-        ? path
-        : `${API_BASE_URL}${path}`;
-
+    const url = toUrl(path);
     const authorization = await authProvider.getAuth();
-
-    const res = await fetch(url, {
-        method: "DELETE",
-        headers: {
-            ...(authorization ? { Authorization: authorization } : {}),
-        },
-        cache: "no-store",
-    });
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status} deleting ${url}`);
-    }
-
-    const text = await res.text();
-    if (!text || !text.trim()) {
-        return halfred.parse({});
-    }
+    let res: Response;
 
     try {
-        return halfred.parse(JSON.parse(text));
+        res = await fetch(url, {
+            ...init,
+            headers: {
+                "Accept": "application/hal+json",
+                ...(init.headers || {}),
+                ...(authorization ? { Authorization: authorization } : {}),
+            },
+            cache: "no-store",
+        });
     } catch {
-        return halfred.parse({});
+        throw new Error(`Could not connect to API at ${url}. Make sure the backend server is running.`);
     }
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`HTTP ${res.status} ${errorContext}${errorText ? `: ${errorText}` : ""}`);
+    }
+
+    return parseHalResponse(res);
+}
+
+export async function getHal(path: string, authProvider: AuthProviderLike) {
+    return requestHal(path, authProvider, {}, `fetching ${toUrl(path)}`);
+}
+
+export async function postHal(path: string, body: Resource, authProvider: AuthProviderLike) {
+    return requestHal(
+        path,
+        authProvider,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        },
+        `posting ${JSON.stringify(body)}`
+    );
+}
+
+export async function postHalAction(path: string, authProvider: AuthProviderLike) {
+    return requestHal(
+        path,
+        authProvider,
+        { method: "POST" },
+        "posting action"
+    );
+}
+
+export async function putHal(path: string, body: Resource, authProvider: AuthProviderLike) {
+    return requestHal(
+        path,
+        authProvider,
+        {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        },
+        `putting ${JSON.stringify(body)}`
+    );
 }
 
 export async function putUriList(
     path: string,
     uris: string | string[],
-    authProvider: { getAuth: () => Promise<string | null> }
+    authProvider: AuthProviderLike
 ) {
-    const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
-    const authorization = await authProvider.getAuth();
-
     const makeAbsolute = (u: string) => {
         const trimmed = String(u).trim();
         if (!trimmed) return "";
         return trimmed.startsWith("http") ? trimmed : `${API_BASE_URL}${trimmed.startsWith("/") ? trimmed : "/" + trimmed}`;
     };
 
-    let bodyText;
-    if (Array.isArray(uris)) {
-        bodyText = uris.map(makeAbsolute).filter(Boolean).join("\n");
-    } else {
-        if (uris.indexOf("\n") !== -1) {
-            bodyText = uris
-                .split(/\r?\n/)
-                .map(l => makeAbsolute(l))
-                .filter(Boolean)
-                .join("\n");
-        } else {
-            bodyText = makeAbsolute(uris);
-        }
-    }
+    const bodyText = Array.isArray(uris)
+        ? uris.map(makeAbsolute).filter(Boolean).join("\n")
+        : uris.includes("\n")
+            ? uris.split(/\r?\n/).map(makeAbsolute).filter(Boolean).join("\n")
+            : makeAbsolute(uris);
 
-    const res = await fetch(url, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "text/uri-list",
-            "Accept": "application/hal+json",
-            ...(authorization ? { Authorization: authorization } : {}),
+    return requestHal(
+        path,
+        authProvider,
+        {
+            method: "PUT",
+            headers: { "Content-Type": "text/uri-list" },
+            body: bodyText,
         },
-        body: bodyText,
-        cache: "no-store",
-    });
+        `putting uri-list to ${toUrl(path)}`
+    );
+}
 
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status} putting uri-list to ${url}`);
-    }
+export async function patchHal(path: string, body: Resource, authProvider: AuthProviderLike) {
+    return requestHal(
+        path,
+        authProvider,
+        {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        },
+        `patching ${JSON.stringify(body)}`
+    );
+}
 
-    const text = await res.text();
-    if (!text || !text.trim()) {
-        return halfred.parse({});
-    }
-
-    try {
-        return halfred.parse(JSON.parse(text));
-    } catch {
-        return halfred.parse({});
-    }
+export async function deleteHal(path: string, authProvider: AuthProviderLike) {
+    await requestHal(
+        path,
+        authProvider,
+        { method: "DELETE" },
+        `deleting ${toUrl(path)}`
+    );
 }

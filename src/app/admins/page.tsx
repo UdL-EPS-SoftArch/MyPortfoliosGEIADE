@@ -1,29 +1,28 @@
 "use client";
- 
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminService } from "@/api/adminApi";
 import { clientAuthProvider } from "@/lib/authProvider";
 import { useAuth } from "@/app/components/authentication";
 import { Admin } from "@/types/admin";
 import AdminCard from "@/app/components/AdminCard";
-import { error } from "console";
- 
+
 export default function AdminsPage() {
-    const router = useRouter(); 
+    const router = useRouter();
     const { user } = useAuth(); // mateix hook que fa servir la Navbar
- 
-    const service = new AdminService(clientAuthProvider());
- 
-    const [admins, setAdmins] = useState<Admin[]>([]); 
-    const [loading, setLoading] = useState(true);  
- 
+
+    const service = useMemo(() => new AdminService(clientAuthProvider()), []);
+
+    const [admins, setAdmins] = useState<Admin[]>([]);
+    const [loading, setLoading] = useState(true);
+
     // Estat del formulari
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ username: "", email: "", password: "" });
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
- 
+
     // --- Protecció de ruta ---
     useEffect(() => {
         if (user === null) {
@@ -33,35 +32,35 @@ export default function AdminsPage() {
             router.replace("/");
         }
     }, [user, router]);
- 
+
     // --- Carregar admins ---
-    const load = async () => {
+    const load = useCallback(async () => {
         setLoading(true);
         const data = await service.getAdmins();
         setAdmins(data);
         setLoading(false);
-    };
- 
+    }, [service]);
+
     useEffect(() => {
         if (user?.authorities?.some(a => a.authority === "ROLE_ADMIN")) {
             load();
         }
-    }, [user]);
- 
+    }, [user, load]);
+
     // --- Formulari ---
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setForm({ ...form, [e.target.name]: e.target.value });
     }
- 
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setFormError(null);
- 
+
         if (!form.username || !form.email || !form.password) {
             setFormError("Tots els camps són obligatoris.");
             return;
         }
- 
+
         setSubmitting(true);
         try {
             await service.createAdmin(form);
@@ -74,9 +73,9 @@ export default function AdminsPage() {
             setSubmitting(false);
         }
     }
- 
+
     if (!user) return null;
- 
+
     return (
         <div className="p-8">
             <div className="flex items-center justify-between mb-6">
@@ -95,7 +94,7 @@ export default function AdminsPage() {
                     {showForm ? "Cancel·lar" : "+ Add Admin"}
                 </button>
             </div>
- 
+
             {showForm && (
                 <form
                     onSubmit={handleSubmit}
@@ -105,14 +104,14 @@ export default function AdminsPage() {
                     "
                 >
                     <h2 className="font-semibold text-lg">Nou administrador</h2>
- 
+
                     {formError && (
                         <p className="text-red-500 text-sm">{formError}</p>
                     )}
- 
+
                     <label className="block space-y-1">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Nom d'usuari
+                            Nom d&apos;usuari
                         </span>
                         <input
                             name="username"
@@ -128,7 +127,7 @@ export default function AdminsPage() {
                             "
                         />
                     </label>
- 
+
                     <label className="block space-y-1">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             Correu electrònic
@@ -147,7 +146,7 @@ export default function AdminsPage() {
                             "
                         />
                     </label>
- 
+
                     <label className="block space-y-1">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             Contrasenya
@@ -166,7 +165,7 @@ export default function AdminsPage() {
                             "
                         />
                     </label>
- 
+
                     <button
                         type="submit"
                         disabled={submitting}
@@ -181,7 +180,7 @@ export default function AdminsPage() {
                     </button>
                 </form>
             )}
- 
+
             {loading ? (
                 <p className="text-gray-500">Carregant admins…</p>
             ) : admins.length === 0 ? (

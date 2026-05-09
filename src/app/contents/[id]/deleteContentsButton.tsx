@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ContentService } from "@/api/contentApi";
-import { ReportService } from "@/api/reportApi";
 import { clientAuthProvider } from "@/lib/authProvider";
-import type { FlatReport } from "@/types/report";
 
-export default function DeleteContentButton({ id, reports }: { id: string, reports: FlatReport[] }) {
+export default function DeleteContentButton({ id }: { id: string }) {
     const router = useRouter();
     const [confirming, setConfirming] = useState(false);
     const [loading, setLoading] = useState(false);

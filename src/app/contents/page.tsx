@@ -10,7 +10,7 @@ export default async function ContentsPage() {
     const rawContents = await contentService.getContents();
 
     const contents: FlatContent[] = rawContents.map((c: Content) => {
-    const selfHref = c.link("self")?.href ?? ""; 
+    const selfHref = c.link("self")?.href ?? "";
 
     return {
         uri: selfHref,
@@ -46,7 +46,3 @@ export default async function ContentsPage() {
         </div>
     );
 }
-
-
-
-

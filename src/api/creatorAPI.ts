@@ -1,7 +1,6 @@
 import { getHal, mergeHal, mergeHalArray, postHal } from "./halClient";
 import type { AuthProvider } from "@/lib/authProvider";
 import { Creator } from "@/types/creator";
-import { Resource } from "halfred";
 import { postHalAction } from "./halClient";
 
 
@@ -23,7 +22,7 @@ export class CreatorService {
 
     async createCreator(creator: Creator): Promise<Creator> {
         const resource = await postHal('/creators', creator, this.authProvider);
-        return mergeHal<Creator>(resource);
+        return resource as Creator;
     }
 
 

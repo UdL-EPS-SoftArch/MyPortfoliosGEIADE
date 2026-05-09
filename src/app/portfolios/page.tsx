@@ -69,10 +69,10 @@ export default function PortfoliosPage() {
                 })
             });
 
-            console.log("STATUS:", res.status);
-
-            const text = await res.text();
-            console.log("RESPONSE:", text);
+            if (!res.ok) {
+                setCreateError("Portfolio could not be created. Please try again.");
+                return;
+            }
 
                 const service = new PortfolioService(clientAuthProvider());
                 const auth2 = await clientAuthProvider().getAuth();
@@ -499,7 +499,7 @@ export default function PortfoliosPage() {
                             </h2>
 
                             <p className="mt-2 text-sm text-gray-600">
-                                Are you sure you want to delete "{portfolioToDelete.name}"?
+                                Are you sure you want to delete &quot;{portfolioToDelete.name}&quot;?
                             </p>
                         </div>
 

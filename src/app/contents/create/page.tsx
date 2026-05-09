@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ContentService } from "@/api/contentApi";
 import { clientAuthProvider } from "@/lib/authProvider";
+import type { Content } from "@/types/content";
+
+function getErrorMessage(err: unknown) {
+    return err instanceof Error ? err.message : "";
+}
 
 export default function CreateContentPage() {
     const router = useRouter();
@@ -23,20 +28,21 @@ export default function CreateContentPage() {
         setError("");
 
         try {
-            const payload: any = {
+            const payload = {
                 name,
                 description,
                 body,
                 visibility,
-            };
+            } as Content;
 
-            await contentService.createContent(payload as any).catch(() => {});
+            await contentService.createContent(payload);
 
             router.push("/contents");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("ERROR REAL:", err);
+            const message = getErrorMessage(err);
 
-            if (err?.message?.includes("409")) {
+            if (message.includes("409")) {
                 setError("A content with this name already exists.");
             } else {
                 setError("Error creating content.");

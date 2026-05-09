@@ -21,8 +21,15 @@ export class UsersService {
         if (!await this.authProvider.getAuth()) {
             return null;
         }
-        const resource = await getHal('/identity', this.authProvider);
-        return mergeHal<User>(resource);
+        try {
+            const resource = await getHal('/identity', this.authProvider);
+            return mergeHal<User>(resource);
+        } catch (error) {
+            if (error instanceof Error && error.message.includes("HTTP 401")) {
+                return null;
+            }
+            throw error;
+        }
     }
 
     async createUser(user: User): Promise<User> {

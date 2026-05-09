@@ -21,3 +21,9 @@ export function clientAuthProvider(): AuthProvider {
         },
     };
 }
+
+export const anonymousAuthProvider: AuthProvider = {
+    async getAuth() {
+        return null;
+    },
+};

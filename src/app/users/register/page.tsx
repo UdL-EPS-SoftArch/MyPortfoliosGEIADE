@@ -1,15 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { User } from "@/types/user";
-import {CreatorService} from "@/api/creatorAPI";
-import {clientAuthProvider} from "@/lib/authProvider";
+import { CreatorService } from "@/api/creatorAPI";
+import { anonymousAuthProvider } from "@/lib/authProvider";
+import type { Creator } from "@/types/creator";
 
 type FormValues = {
     username: string;
@@ -17,8 +17,28 @@ type FormValues = {
     password: string;
 };
 
+function getRegistrationErrorMessage(error: unknown) {
+    if (!(error instanceof Error)) {
+        return "Registration failed.";
+    }
+
+    const jsonStart = error.message.indexOf("{");
+    if (jsonStart === -1) {
+        return error.message;
+    }
+
+    try {
+        const parsed = JSON.parse(error.message.slice(jsonStart));
+        const firstBackendMessage = parsed?.errors?.[0]?.message;
+        return typeof firstBackendMessage === "string" ? firstBackendMessage : error.message;
+    } catch {
+        return error.message;
+    }
+}
+
 export default function RegistrationPage() {
-    const service = new CreatorService(clientAuthProvider())
+    const service = new CreatorService(anonymousAuthProvider);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const {
         register,
         handleSubmit,
@@ -27,10 +47,16 @@ export default function RegistrationPage() {
 
     const router = useRouter();
 
-    const onSubmit: SubmitHandler<FormValues> = (data) => {
-        service.createCreator(data as User).then(() => {
+    const onSubmit: SubmitHandler<FormValues> = async (data) => {
+        setErrorMessage(null);
+
+        try {
+            await service.createCreator(data as Creator);
             router.push("/login");
-        })
+        } catch (error) {
+            console.error(error);
+            setErrorMessage(getRegistrationErrorMessage(error));
+        }
     };
 
     return (
@@ -43,8 +69,12 @@ export default function RegistrationPage() {
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+                                {errorMessage && (
+                                    <p className="text-sm text-red-600 mt-1">{errorMessage}</p>
+                                )}
+
                                 <div>
-                                    <Label htmlFor="name">Name</Label>
+                                    <Label htmlFor="username">Name</Label>
                                     <Input
                                         id="username"
                                         {...register("username", { required: "Username is required" })}
@@ -79,7 +109,7 @@ export default function RegistrationPage() {
                                         type="password"
                                         {...register("password", {
                                             required: "Password is required",
-                                            minLength: { value: 6, message: "Minimum 8 characters" },
+                                            minLength: { value: 8, message: "Minimum 8 characters" },
                                             maxLength: { value: 256, message: "Maximum 256 characters" }
                                         })}
                                     />

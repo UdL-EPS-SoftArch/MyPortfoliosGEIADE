@@ -4,7 +4,7 @@ export interface ReportEntity {
     uri?: string;
     reportId?: string;
     reason: string;
-    createdAt: string;
+    createdAt?: string;
     content: string; // URI of the content being reported
 }
 

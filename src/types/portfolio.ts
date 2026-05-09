@@ -1,18 +1,15 @@
 import { Resource } from "halfred";
 
-export enum PortfolioVisibility {
-    PUBLIC = "PUBLIC",
-    PRIVATE = "PRIVATE",
-    // añade más si existen en tu backend
-}
+export type PortfolioVisibility = "PUBLIC" | "PRIVATE" | "RESTRICTED";
 
 export interface PortfolioEntity {
-    uri: string;
+    uri?: string;
     name: string;
     description?: string;
+    visibility?: PortfolioVisibility;
+    ownerName?: string;
     created?: Date;
     modified?: Date;
-    visibility?: PortfolioVisibility;
 }
 
 export type Portfolio = PortfolioEntity & Resource;

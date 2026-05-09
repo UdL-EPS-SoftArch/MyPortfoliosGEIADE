@@ -1,15 +1,26 @@
 import { deleteHal, getHal, mergeHal, postHal, putUriList } from "./halClient";
 import type { AuthProvider } from "@/lib/authProvider";
 import type { Tag } from "@/types/tag";
+import type { Resource } from "halfred";
+
+type HalLinks = {
+    self?: {
+        href?: string;
+    };
+    [key: string]: unknown;
+};
+
+type HalResource = Resource & {
+    uri?: string;
+    _links?: HalLinks;
+    _original?: unknown;
+    link?: (rel: string) => { href?: string } | undefined;
+    [key: string]: unknown;
+};
 
 type HalTag = Tag & {
     uri?: string;
-    _links?: {
-        self?: {
-            href?: string;
-        };
-        [key: string]: unknown;
-    };
+    _links?: HalLinks;
     id?: number;
 };
 
@@ -20,12 +31,7 @@ export type HalContent = {
     description?: string;
     visibility?: string;
     uri?: string;
-    _links?: {
-        self?: {
-            href?: string;
-        };
-        [key: string]: unknown;
-    };
+    _links?: HalLinks;
 };
 
 export class TagsService {
@@ -35,16 +41,17 @@ export class TagsService {
         const resource = await getHal("/tags", this.authProvider);
         const embedded = resource.embeddedArray("tags") || [];
 
-        return embedded.map((item: any) => {
+        return embedded.map((item: Resource) => {
+            const halItem = item as HalResource;
             const tag = mergeHal<Tag>(item) as HalTag;
 
             const href =
-                item?._links?.self?.href ??
+                halItem?._links?.self?.href ??
                 tag?._links?.self?.href ??
-                item?.link?.("self")?.href;
+                halItem?.link?.("self")?.href;
 
             const uri =
-                item?.uri ??
+                halItem?.uri ??
                 tag?.uri ??
                 (href ? new URL(href).pathname : undefined);
 
@@ -53,7 +60,7 @@ export class TagsService {
             return {
                 ...tag,
                 uri,
-                _links: item?._links ?? tag?._links,
+                _links: halItem?._links ?? tag?._links,
                 id: tag.id ?? (idFromUri ? Number(idFromUri) : undefined),
             };
         });
@@ -71,15 +78,16 @@ export class TagsService {
 
     async findById(id: number | string): Promise<HalTag> {
         const resource = await getHal(`/tags/${id}`, this.authProvider);
+        const halResource = resource as HalResource;
         const tag = mergeHal<Tag>(resource) as HalTag;
 
         const href =
-            (resource as any)?._links?.self?.href ??
+            halResource?._links?.self?.href ??
             tag?._links?.self?.href ??
-            (resource as any)?.link?.("self")?.href;
+            halResource?.link?.("self")?.href;
 
         const uri =
-            (resource as any)?.uri ??
+            halResource?.uri ??
             tag?.uri ??
             (href ? new URL(href).pathname : undefined);
 
@@ -88,7 +96,7 @@ export class TagsService {
         return {
             ...tag,
             uri,
-            _links: (resource as any)?._links ?? tag?._links,
+            _links: halResource?._links ?? tag?._links,
             id: tag.id ?? (idFromUri ? Number(idFromUri) : undefined),
         };
     }
@@ -101,16 +109,17 @@ export class TagsService {
 
         const embedded = resource.embeddedArray("contents") || [];
 
-        return embedded.map((item: any) => {
-            const content = mergeHal<any>(item) as HalContent;
+        return embedded.map((item: Resource) => {
+            const halItem = item as HalResource;
+            const content = mergeHal<HalContent>(item) as HalContent;
 
             const href =
-                item?._links?.self?.href ??
+                halItem?._links?.self?.href ??
                 content?._links?.self?.href ??
-                item?.link?.("self")?.href;
+                halItem?.link?.("self")?.href;
 
             const uri =
-                item?.uri ??
+                halItem?.uri ??
                 content?.uri ??
                 (href ? new URL(href).pathname : undefined);
 
@@ -119,7 +128,7 @@ export class TagsService {
             return {
                 ...content,
                 uri,
-                _links: item?._links ?? content?._links,
+                _links: halItem?._links ?? content?._links,
                 contentId:
                     content.contentId ?? (idFromUri ? Number(idFromUri) : undefined),
             };
@@ -134,27 +143,30 @@ export class TagsService {
 
         let embedded = resource.embeddedArray("contents") || [];
 
-        if ((!embedded || embedded.length === 0) && Array.isArray((resource as any)._original)) {
-            embedded = (resource as any)._original;
+        const halResource = resource as HalResource;
+
+        if ((!embedded || embedded.length === 0) && Array.isArray(halResource._original)) {
+            embedded = halResource._original as Resource[];
         }
 
         if ((!embedded || embedded.length === 0)) {
             const numericItems = Object.keys(resource)
                 .filter(k => /^[0-9]+$/.test(k))
-                .map(k => (resource as any)[k]);
+                .map(k => halResource[k] as Resource);
             if (numericItems.length > 0) embedded = numericItems;
         }
-        
-        const mapped = embedded.map((item: any) => {
-            const content = mergeHal<any>(item) as HalContent;
+
+        const mapped = embedded.map((item: Resource) => {
+            const halItem = item as HalResource;
+            const content = mergeHal<HalContent>(item) as HalContent;
 
             const href =
-                item?._links?.self?.href ??
+                halItem?._links?.self?.href ??
                 content?._links?.self?.href ??
-                item?.link?.("self")?.href;
+                halItem?.link?.("self")?.href;
 
             const uri =
-                item?.uri ??
+                halItem?.uri ??
                 content?.uri ??
                 (href ? new URL(href).pathname : undefined);
 
@@ -163,7 +175,7 @@ export class TagsService {
             return {
                 ...content,
                 uri,
-                _links: item?._links ?? content?._links,
+                _links: halItem?._links ?? content?._links,
                 contentId:
                     content.contentId ?? (idFromUri ? Number(idFromUri) : undefined),
             };
