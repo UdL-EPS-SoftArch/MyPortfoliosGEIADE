@@ -10,6 +10,7 @@ import { useAuth } from "@/app/components/authentication";
 import { Avatar } from "@/components/ui/avatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { LogOut } from "lucide-react";
 
 export default function Loginbar() {
     const router = useRouter();
@@ -54,14 +55,14 @@ export default function Loginbar() {
             <div className="flex items-center gap-2">
                 <Link
                     href="/login"
-                    className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                    className="inline-flex h-9 items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
                 >
                     Login
                 </Link>
 
                 <Link
                     href="/users/register"
-                    className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                    className="inline-flex h-9 items-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
                 >
                     Register
                 </Link>
@@ -70,27 +71,27 @@ export default function Loginbar() {
     }
 
     return (
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-                <Avatar className="rounded-lg flex items-center justify-center bg-gray-200">
+                <Avatar className="flex items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                     <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
                 </Avatar>
 
                 {isAdmin ? (
-                    <span className="text-md font-medium text-gray-500">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                         {user.username ?? "Admin"}
                     </span>
                 ) : (
                     <Link
                         href={`/profile`}
-                        className="text-blue-600 text-md font-medium"
+                        className="text-sm font-semibold text-emerald-700 transition hover:text-emerald-800 dark:text-emerald-300"
                     >
                         {user.username ?? "User"}
                     </Link>
                 )}
 
                 {isCreator && (
-                    <span className="ml-2 text-xs px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                    <span className="ml-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                         CREATOR
                     </span>
                 )}
@@ -98,8 +99,9 @@ export default function Loginbar() {
 
             <button
                 onClick={logout}
-                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                className="inline-flex h-9 items-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
             >
+                <LogOut className="size-4" />
                 Logout
             </button>
         </div>

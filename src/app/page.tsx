@@ -3,31 +3,119 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useAuth } from "@/app/components/authentication";
+import {
+    ArrowRight,
+    BadgeCheck,
+    Compass,
+    FolderKanban,
+    Globe2,
+    LayoutDashboard,
+    ShieldCheck,
+    Sparkles,
+    Tags,
+    Users,
+} from "lucide-react";
 
 function Page({ children }: { children: ReactNode }) {
     return (
-        <div className="w-full max-w-5xl mx-auto px-6 py-10">
+        <div className="relative min-h-[calc(100vh-73px)] overflow-hidden bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+            <div className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_25%_15%,rgba(16,185,129,0.20),transparent_32%),radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.16),transparent_30%)]" />
+            <div className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
             {children}
+            </div>
         </div>
     );
 }
 
-function DashboardCard({ children, href }: { children: ReactNode; href: string }) {
+function DashboardCard({
+    children,
+    href,
+    icon: Icon,
+}: {
+    children: ReactNode;
+    href: string;
+    icon: typeof FolderKanban;
+}) {
     return (
         <Link
             href={href}
-            className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+            className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg hover:shadow-slate-200/70 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-500/40 dark:hover:shadow-black/20"
         >
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="flex size-11 items-center justify-center rounded-lg bg-slate-100 text-slate-800 transition group-hover:bg-emerald-600 group-hover:text-white dark:bg-slate-800 dark:text-slate-100">
+                    <Icon className="size-5" />
+                </span>
+                <ArrowRight className="size-4 text-slate-400 transition group-hover:translate-x-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-300" />
+            </div>
             {children}
         </Link>
     );
 }
 
-function Badge({ children }: { children: ReactNode }) {
+function Badge({ children, tone = "slate" }: { children: ReactNode; tone?: "slate" | "emerald" | "sky" }) {
+    const tones = {
+        slate: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
+        emerald: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
+        sky: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",
+    };
+
     return (
-        <span className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>
             {children}
         </span>
+    );
+}
+
+function Hero({
+    eyebrow,
+    title,
+    description,
+    badge,
+    badgeTone,
+    children,
+}: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    badge?: string;
+    badgeTone?: "slate" | "emerald" | "sky";
+    children?: ReactNode;
+}) {
+    return (
+        <section className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-stretch">
+            <div className="flex min-h-[320px] flex-col justify-center rounded-lg border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur sm:p-8 dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="mb-5 flex flex-wrap items-center gap-3">
+                    <Badge tone="emerald">{eyebrow}</Badge>
+                    {badge && <Badge tone={badgeTone}>{badge}</Badge>}
+                </div>
+                <h1 className="max-w-3xl text-4xl font-bold tracking-normal text-slate-950 sm:text-5xl dark:text-white">
+                    {title}
+                </h1>
+                <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
+                    {description}
+                </p>
+                {children}
+            </div>
+
+            <aside className="rounded-lg border border-slate-200 bg-slate-950 p-6 text-white shadow-sm dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-300">
+                        <Sparkles className="size-5" />
+                    </span>
+                    <div>
+                        <p className="text-sm font-semibold">Workspace overview</p>
+                    </div>
+                </div>
+                <div className="mt-8 grid gap-3">
+                    {["Portfolios", "Projects", "Public discovery"].map((item, index) => (
+                        <div key={item} className="flex items-center justify-between rounded-lg bg-white/8 px-4 py-3">
+                            <span className="text-sm text-slate-200">{item}</span>
+                            <span className="text-sm font-semibold text-emerald-300">0{index + 1}</span>
+                        </div>
+                    ))}
+                </div>
+            </aside>
+        </section>
     );
 }
 
@@ -40,28 +128,27 @@ export default function Home() {
     if (!user) {
         return (
             <Page>
-                <div className="flex flex-col items-center py-20 text-center">
-                    <h1 className="text-4xl font-bold">Welcome</h1>
-                    <p className="mt-2 text-zinc-500">
-                        Sign in to access your dashboard
-                    </p>
-
-                    <div className="mt-8 flex gap-3">
+                <Hero
+                    eyebrow="Portfolio platform"
+                    title="Build a sharper home for your projects."
+                    description="Create portfolios, group projects, and explore public work from a focused workspace designed for students, creators, and reviewers."
+                >
+                    <div className="mt-8 flex flex-wrap gap-3">
                         <Link
-                            className="rounded-lg bg-blue-600 px-5 py-2.5 text-white transition hover:bg-blue-700"
+                            className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
                             href="/login"
                         >
-                            Login
+                            Login <ArrowRight className="size-4" />
                         </Link>
 
                         <Link
-                            className="rounded-lg border border-zinc-300 px-5 py-2.5 dark:border-zinc-700"
+                            className="inline-flex h-11 items-center rounded-md border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                             href="/users/register"
                         >
                             Register
                         </Link>
                     </div>
-                </div>
+                </Hero>
             </Page>
         );
     }
@@ -69,36 +156,34 @@ export default function Home() {
     if (isAdmin) {
         return (
             <Page>
-                <div className="flex flex-col gap-10">
-                    <div>
-                        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-                        <p className="mt-2 text-zinc-500">
-                            System administration panel
-                        </p>
-                        <div className="mt-3">
-                            <Badge>ADMIN</Badge>
-                        </div>
-                    </div>
+                <div className="flex flex-col gap-8">
+                    <Hero
+                        eyebrow="Administration"
+                        title="Control panel for the whole platform."
+                        description="Review creators, organize taxonomy, and keep the portfolio ecosystem clean from one composed dashboard."
+                        badge="ADMIN"
+                        badgeTone="sky"
+                    />
 
-                    <div className="grid gap-6 sm:grid-cols-2">
-                        <DashboardCard href="/creators">
-                            <h2 className="font-semibold">Manage Creators</h2>
-                            <p className="mt-1 text-sm text-zinc-500">
-                                Suspend or manage creators
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <DashboardCard href="/creators" icon={Users}>
+                            <h2 className="text-lg font-semibold">Manage Creators</h2>
+                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                Suspend, review, or manage creator accounts.
                             </p>
                         </DashboardCard>
 
-                        <DashboardCard href="/admins">
-                            <h2 className="font-semibold">Admins</h2>
-                            <p className="mt-1 text-sm text-zinc-500">
-                                Admin management panel
+                        <DashboardCard href="/admins" icon={ShieldCheck}>
+                            <h2 className="text-lg font-semibold">Admins</h2>
+                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                Access the admin management panel.
                             </p>
                         </DashboardCard>
 
-                        <DashboardCard href="/tags">
-                            <h2 className="font-semibold">Tags</h2>
-                            <p className="mt-1 text-sm text-zinc-500">
-                                Manage content tags
+                        <DashboardCard href="/tags" icon={Tags}>
+                            <h2 className="text-lg font-semibold">Tags</h2>
+                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                Maintain categories used across content.
                             </p>
                         </DashboardCard>
                     </div>
@@ -110,36 +195,27 @@ export default function Home() {
     if (isCreator) {
         return (
             <Page>
-                <div className="flex flex-col gap-10">
-                    <div>
-                        <h1 className="text-4xl font-bold">Creator Dashboard</h1>
-                        <p className="mt-2 text-zinc-500">
-                            Manage your content, portfolios, and projects
-                        </p>
-                        <div className="mt-3">
-                            <Badge>CREATOR</Badge>
-                        </div>
-                    </div>
+                <div className="flex flex-col gap-8">
+                    <Hero
+                        eyebrow="Creator workspace"
+                        title="Shape your content into portfolios."
+                        description="Manage your portfolios and projects easily."
+                        badge="CREATOR"
+                        badgeTone="emerald"
+                    />
 
-                    <div className="grid gap-6 sm:grid-cols-2">
-                        <DashboardCard href="/creators/content">
-                            <h2 className="font-semibold">My Content</h2>
-                            <p className="mt-1 text-sm text-zinc-500">
-                                Manage posts
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <DashboardCard href="/projects" icon={FolderKanban}>
+                            <h2 className="text-lg font-semibold">Projects</h2>
+                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                Create and manage projects inside portfolios.
                             </p>
                         </DashboardCard>
 
-                        <DashboardCard href="/projects">
-                            <h2 className="font-semibold">Projects</h2>
-                            <p className="mt-1 text-sm text-zinc-500">
-                                Create and manage projects inside portfolios
-                            </p>
-                        </DashboardCard>
-
-                        <DashboardCard href="/portfolios">
-                            <h2 className="font-semibold">My Portfolios</h2>
-                            <p className="mt-1 text-sm text-zinc-500">
-                                Organize your public and private portfolios
+                        <DashboardCard href="/portfolios" icon={LayoutDashboard}>
+                            <h2 className="text-lg font-semibold">My Portfolios</h2>
+                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                Organize your public and private portfolio spaces.
                             </p>
                         </DashboardCard>
                     </div>
@@ -150,43 +226,73 @@ export default function Home() {
 
     return (
         <Page>
-            <div className="flex flex-col gap-10">
-                <div>
-                    <h1 className="text-4xl font-bold">MyPortfolios Frontend</h1>
-                    <p className="mt-2 max-w-2xl text-zinc-500">
-                        Manage projects inside portfolios and explore public work.
-                    </p>
+            <div className="flex flex-col gap-8">
+                <Hero
+                    eyebrow="Dashboard"
+                    title="A cleaner launchpad for portfolios and project discovery."
+                    description="Move between your projects, portfolio collections, and public exploration without digging through menus."
+                    badge={user.username ?? "Signed in"}
+                    badgeTone="slate"
+                >
+                    <div className="mt-8 flex flex-wrap gap-3">
+                        <Link
+                            className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                            href="/projects"
+                        >
+                            Open projects <ArrowRight className="size-4" />
+                        </Link>
+                        <Link
+                            className="inline-flex h-11 items-center rounded-md border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                            href="/projects/explore"
+                        >
+                            Explore work
+                        </Link>
+                    </div>
+                </Hero>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <DashboardCard href="/projects" icon={FolderKanban}>
+                        <h2 className="text-lg font-semibold">Projects</h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                            Create projects and assign them to portfolios.
+                        </p>
+                    </DashboardCard>
+
+                    <DashboardCard href="/projects/explore" icon={Compass}>
+                        <h2 className="text-lg font-semibold">Explore Projects</h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                            Browse public projects grouped by portfolio.
+                        </p>
+                    </DashboardCard>
+
+                    <DashboardCard href="/portfolios" icon={LayoutDashboard}>
+                        <h2 className="text-lg font-semibold">My Portfolios</h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                            Manage your portfolio structure.
+                        </p>
+                    </DashboardCard>
+
+                    <DashboardCard href="/publicportfolios" icon={Globe2}>
+                        <h2 className="text-lg font-semibold">Public Portfolios</h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                            Discover portfolios shared by users.
+                        </p>
+                    </DashboardCard>
                 </div>
 
-                <div className="grid gap-6 sm:grid-cols-2">
-                    <DashboardCard href="/projects">
-                        <h2 className="font-semibold">Projects</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
-                            Create projects and assign them to portfolios
-                        </p>
-                    </DashboardCard>
-
-                    <DashboardCard href="/projects/explore">
-                        <h2 className="font-semibold">Explore Projects</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
-                            Browse public projects grouped by portfolio
-                        </p>
-                    </DashboardCard>
-
-                    <DashboardCard href="/portfolios">
-                        <h2 className="font-semibold">My Portfolios</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
-                            Manage your portfolios
-                        </p>
-                    </DashboardCard>
-
-                    <DashboardCard href="/publicportfolios">
-                        <h2 className="font-semibold">Public Portfolios</h2>
-                        <p className="mt-1 text-sm text-zinc-500">
-                            Discover public portfolios shared by users
-                        </p>
-                    </DashboardCard>
-                </div>
+                <section className="grid gap-4 lg:grid-cols-3">
+                    {[
+                        ["Focused", "Primary actions are visible immediately."],
+                        ["Role-aware", "The dashboard adapts for admins, creators, and users."],
+                        ["Discoverable", "Public exploration has equal visual weight."],
+                    ].map(([title, text]) => (
+                        <div key={title} className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                            <BadgeCheck className="mb-3 size-5 text-emerald-600 dark:text-emerald-300" />
+                            <h3 className="font-semibold">{title}</h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{text}</p>
+                        </div>
+                    ))}
+                </section>
             </div>
         </Page>
     );
