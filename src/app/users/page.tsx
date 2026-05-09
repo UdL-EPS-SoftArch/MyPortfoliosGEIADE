@@ -24,8 +24,7 @@ export default async function UsersPage() {
                         key={i}
                         className="p-4 w-full border rounded-lg bg-white shadow-sm hover:shadow transition dark:bg-black"
                     >
-                        <Link className="font-medium" href={`/users/${ user.username}`}>
-                        <div>Hola</div>
+                        <Link className="font-medium" href={`/users/${user.username}`}>
                             {user.username}
                         </Link>
 

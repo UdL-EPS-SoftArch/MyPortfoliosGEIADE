@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ReportService } from "@/api/reportApi";
 import { clientAuthProvider } from "@/lib/authProvider";
+import type { Report } from "@/types/report";
+
+function getErrorMessage(err: unknown) {
+    return err instanceof Error ? err.message : "";
+}
 
 export default function ReportForm({ id }: { id: string }) {
     const router = useRouter();
@@ -30,15 +35,16 @@ export default function ReportForm({ id }: { id: string }) {
                 content: `http://localhost:8080/contents/${id}`,
             };
 
-            await reportService.createReport(payload as any);
+            await reportService.createReport(payload as Report);
 
             router.push(`/contents/${id}`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
+            const message = getErrorMessage(err);
 
-            if (err?.message?.includes("400")) {
+            if (message.includes("400")) {
                 setError("Reason cannot be empty.");
-            } else if (err?.message?.includes("409")) {
+            } else if (message.includes("409")) {
                 setError("You already reported this content.");
             } else {
                 setError("Error creating report.");

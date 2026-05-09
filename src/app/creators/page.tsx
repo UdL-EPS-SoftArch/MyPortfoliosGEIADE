@@ -7,19 +7,31 @@ import { User } from "@/types/user";
 import CreatorCard from "../components/CreatorCard";
 
 export default function CreatorsAdminPage() {
-    const service = new CreatorService(clientAuthProvider());
     const [creators, setCreators] = useState<User[]>([]);
 
-    const load = async () => {
+    async function load() {
+        const service = new CreatorService(clientAuthProvider());
         const data = await service.getCreators();
         setCreators(data);
-    };
+    }
 
     useEffect(() => {
-        load();
+        let mounted = true;
+        const service = new CreatorService(clientAuthProvider());
+
+        service.getCreators().then((data) => {
+            if (mounted) {
+                setCreators(data);
+            }
+        });
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     const suspend = async (username: string) => {
+        const service = new CreatorService(clientAuthProvider());
         await service.suspendCreator(username);
         await load();
     };

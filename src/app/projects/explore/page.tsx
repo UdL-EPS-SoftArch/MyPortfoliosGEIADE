@@ -33,8 +33,8 @@ export default async function ExploreProjectsPage() {
                 };
             }),
         );
-    } catch (error) {
-        console.log(error);
+    } catch {
+        projectGroups = [];
     }
 
     const plainProjectGroups: Array<{ portfolio: PortfolioEntity; projects: ProjectEntity[] }> = projectGroups.map(

@@ -7,7 +7,6 @@ import { clientAuthProvider } from "@/lib/authProvider";
 import { toast } from "sonner";
 export default function ProfilePage() {
     const { user } = useAuth();
-    const service = new ProfileService(clientAuthProvider());
 
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -15,6 +14,7 @@ export default function ProfilePage() {
     useEffect(() => {
         async function load() {
             try {
+                const service = new ProfileService(clientAuthProvider());
                 const data = await service.getMyProfile();
                 setProfile(data);
             } catch (err) {
@@ -30,6 +30,7 @@ export default function ProfilePage() {
     async function handleSave() {
         if (!profile) return;
 
+        const service = new ProfileService(clientAuthProvider());
         const updated = await service.updateMyProfile(profile);
         setProfile(updated);
         toast.success("Profile updated");    }
@@ -78,7 +79,7 @@ export default function ProfilePage() {
                         onChange={(e) =>
                             setProfile({
                                 ...profile!,
-                                visibility: e.target.value as any,
+                                visibility: e.target.value as Profile["visibility"],
                             })
                         }
                     >

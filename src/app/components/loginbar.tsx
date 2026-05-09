@@ -38,12 +38,12 @@ export default function Loginbar() {
             }
         }
 
-        load();
+        void load();
 
         return () => {
             mounted = false;
         };
-    }, []);
+    }, [setUser]);
 
     const roles = user?.authorities?.map(a => a.authority) ?? [];
     const isCreator = roles.includes("ROLE_CREATOR");

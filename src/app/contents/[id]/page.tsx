@@ -19,7 +19,7 @@ export default async function ContentPage(props: { params: Promise<{ id: string 
         uri: r.uri ?? "",
         reportId: r.reportId ?? "",
         reason: r.reason,
-        createdAt: r.createdAt,
+        createdAt: r.createdAt ?? "",
         contentId: id,
     }));
 
@@ -41,7 +41,7 @@ export default async function ContentPage(props: { params: Promise<{ id: string 
                                 </span>
                             )}
                         </div>
-                        <DeleteContentButton id={id} reports={flatReports} />
+                        <DeleteContentButton id={id} />
                     </div>
                     <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 leading-tight">
                         {content.name}
