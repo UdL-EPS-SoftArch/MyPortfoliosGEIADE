@@ -543,7 +543,7 @@ export default function PortfoliosPage() {
                                             </div>
                                         ) : (
                                             <>
-                                                <h2 className="text-2xl font-bold text-gray-900">
+                                                <h2 className="text-2xl font-bold text-gray-900 break-words whitespace-normal max-w-full">
                                                     {p.name}
                                                 </h2>
 
