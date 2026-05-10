@@ -147,6 +147,16 @@ export default function PortfoliosPage() {
             return;
         }
 
+        if (name.trim().length > 100) {
+            setCreateError("Name must be at most 100 characters.");
+            return;
+        }
+
+        if (description.trim().length > 300) {
+            setCreateError("Description must be at most 300 characters.");
+            return;
+        }
+
         if (visibility === "RESTRICTED" && restrictedUsernames.length === 0) {
             setCreateError("Add at least one username for a restricted portfolio.");
             return;
@@ -360,7 +370,9 @@ export default function PortfoliosPage() {
                                 setCreateError("");
                             }}
                             className="border rounded-xl p-3 flex-1"
+                            maxLength={100}
                         />
+                        <div className="text-xs text-gray-500 mt-1">{name.length}/100</div>
 
                         <input
                             type="text"
@@ -371,7 +383,9 @@ export default function PortfoliosPage() {
                                 setCreateError("");
                             }}
                             className="border rounded-xl p-3 flex-1"
+                            maxLength={250}
                         />
+                        <div className="text-xs text-gray-500 mt-1">{description.length}/250</div>
 
                         <div className="flex items-center gap-3">
                             <div className="inline-flex rounded-xl bg-gray-100 p-1">
