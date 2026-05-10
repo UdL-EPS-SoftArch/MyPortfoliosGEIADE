@@ -152,8 +152,8 @@ export default function PortfoliosPage() {
             return;
         }
 
-        if (description.trim().length > 300) {
-            setCreateError("Description must be at most 300 characters.");
+        if (description.trim().length > 250) {
+            setCreateError("Description must be at most 250 characters.");
             return;
         }
 
@@ -369,10 +369,10 @@ export default function PortfoliosPage() {
                                 setName(e.target.value);
                                 setCreateError("");
                             }}
-                            className="border rounded-xl p-3 flex-1"
+                            className={`border rounded-xl p-3 flex-1 ${name.length >= 100 ? 'border-red-400' : ''}`}
                             maxLength={100}
                         />
-                        <div className="text-xs text-gray-500 mt-1">{name.length}/100</div>
+                        <div className={`text-xs mt-1 ${name.length >= 100 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{name.length}/100</div>
 
                         <input
                             type="text"
@@ -382,10 +382,10 @@ export default function PortfoliosPage() {
                                 setDescription(e.target.value);
                                 setCreateError("");
                             }}
-                            className="border rounded-xl p-3 flex-1"
+                            className={`border rounded-xl p-3 flex-1 ${description.length >= 250 ? 'border-red-400' : ''}`}
                             maxLength={250}
                         />
-                        <div className="text-xs text-gray-500 mt-1">{description.length}/250</div>
+                        <div className={`text-xs mt-1 ${description.length >= 250 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{description.length}/250</div>
 
                         <div className="flex items-center gap-3">
                             <div className="inline-flex rounded-xl bg-gray-100 p-1">
