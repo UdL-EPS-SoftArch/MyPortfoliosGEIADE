@@ -72,7 +72,7 @@ function RestrictedUsernamesInput({
 
             <input
                 type="text"
-                placeholder={usernames.length ? "Add another username" : "user1, user2, user3"}
+                placeholder={usernames.length ? "Add another username" : "Ex: user1, user2, user3"}
                 value={draftUsername}
                 onBlur={addDraftUsernames}
                 onChange={(event) => setDraftUsername(event.target.value)}
@@ -362,7 +362,7 @@ export default function PortfoliosPage() {
                     <div className="flex flex-col md:flex-row gap-4">
 
                         <div className="flex-1">
-                            <div className="flex justify-end">
+                            <div className="flex justify-end pr-3">
                                 <div className={`text-xs ${name.length >= 100 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{name.length}/100</div>
                             </div>
 
@@ -379,8 +379,8 @@ export default function PortfoliosPage() {
                             />
                         </div>
 
-                        <div className="flex-1">
-                            <div className="flex justify-end">
+                            <div className="flex-1">
+                            <div className="flex justify-end pr-3">
                                 <div className={`text-xs ${description.length >= 250 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{description.length}/250</div>
                             </div>
 
@@ -418,13 +418,16 @@ export default function PortfoliosPage() {
                         </div>
 
                         {visibility === "RESTRICTED" && (
-                            <RestrictedUsernamesInput
-                                usernames={restrictedUsernames}
-                                onChange={(usernames) => {
-                                    setRestrictedUsernames(usernames);
-                                    setCreateError("");
-                                }}
-                            />
+                            <div className="flex-1 pl-3">
+                                <p className="text-xs text-gray-500 mb-2 pl-3">Select the users with access</p>
+                                <RestrictedUsernamesInput
+                                    usernames={restrictedUsernames}
+                                    onChange={(usernames) => {
+                                        setRestrictedUsernames(usernames);
+                                        setCreateError("");
+                                    }}
+                                />
+                            </div>
                         )}
 
                         <button
@@ -559,10 +562,13 @@ export default function PortfoliosPage() {
                                                 </div>
 
                                                 {editVisibility === "RESTRICTED" && (
-                                                    <RestrictedUsernamesInput
-                                                        usernames={editRestrictedUsernames}
-                                                        onChange={setEditRestrictedUsernames}
-                                                    />
+                                                    <div className="pl-3">
+                                                        <p className="text-xs text-gray-500 mb-2 pl-3">Select the users with access</p>
+                                                        <RestrictedUsernamesInput
+                                                            usernames={editRestrictedUsernames}
+                                                            onChange={setEditRestrictedUsernames}
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
                                         ) : (
