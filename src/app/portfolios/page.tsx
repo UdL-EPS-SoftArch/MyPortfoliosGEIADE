@@ -596,7 +596,7 @@ export default function PortfoliosPage() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className="text-gray-600 leading-relaxed min-h-[80px]">
+                                    <p className="text-gray-600 leading-relaxed whitespace-normal break-words min-h-[80px]">
                                         {p.description || "No description available."}
                                     </p>
                                 )}
