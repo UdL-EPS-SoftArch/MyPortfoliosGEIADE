@@ -196,7 +196,7 @@ export default function PortfoliosPage() {
                     description: description.trim(),
                     visibility,
                     // send Spring Data REST compatible user URIs when restricted
-                    allowedUsers: visibility === "RESTRICTED" ? allowedUsers.map(u => `/users/${u}`) : []
+                    allowedUsers: visibility === "RESTRICTED" ? allowedUsers.map(u => `http://localhost:8080/users/${u}`) : []
                 })
             });
 
@@ -294,7 +294,7 @@ export default function PortfoliosPage() {
                 description: editDescription,
                 visibility: editVisibility,
                 // send Spring Data REST compatible user URIs when restricted
-                allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers.map(u => `/users/${u}`) : [],
+                allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers.map(u => `http://localhost:8080/users/${u}`) : [],
             });
 
             setData((currentData) =>
@@ -378,7 +378,7 @@ export default function PortfoliosPage() {
                         </button>
                     </div>
 
-                    <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
 
                         <div className="flex-1">
                             <div className="flex justify-end pr-3">

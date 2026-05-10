@@ -25,26 +25,50 @@ export default function RestrictedPortfoliosPage() {
             return auth ? atob(auth.replace("Basic ", "")).split(":")[0] : null;
         };
 
-        const getAllowedUsernamesFromPortfolio = (portfolio: Portfolio) => {
-            const raw: any[] = (portfolio as any).allowedUsers ?? [];
-            return raw.map((u) => {
-                if (typeof u !== "string") return "";
-                const parts = u.split("/").filter(Boolean);
-                return parts.length ? parts[parts.length - 1] : u;
-            }).filter(Boolean);
-        };
+        Promise.all([service.getPortfolios(), clientAuthProvider().getAuth()])
+            .then(async ([portfolios, auth]) => {
+                const currentUsername = auth ? atob(auth.replace("Basic ", "")).split(":")[0] : null;
+                console.log("CURRENT USERNAME:", currentUsername);
 
-        Promise.all([service.getPortfolios(), getCurrentUsername()])
-            .then(async ([portfolios, currentUsername]) => {
+                const restrictedPortfolios: Portfolio[] = [];
 
-                const restrictedPortfolios = portfolios.filter(
-                    (p) =>
-                        p.visibility === "RESTRICTED"
-                        && Boolean(
+                for (const p of portfolios) {
+                    if (p.visibility !== "RESTRICTED") continue;
+
+                    try {
+                        const allowedUsersLink =
+                            (typeof p.link === 'function' ? p.link('allowedUsers')?.href : undefined)
+                            || (p as any)._links?.allowedUsers?.[0]?.href;
+                        if (!allowedUsersLink) continue;
+
+                        const response = await fetch(allowedUsersLink, {
+                            headers: {
+                                ...(auth ? { Authorization: auth } : {})
+                            }
+                        });
+                        if (!response.ok) {
+                            console.warn(`allowedUsers fetch failed for ${p.name}:`, response.status, response.statusText);
+                            // skip this portfolio if allowedUsers endpoint fails
+                            continue;
+                        }
+
+                        const json = await response.json();
+                        const creators = json?._embedded?.creators ?? [];
+                        const usernames = creators.map((u: any) => u.username).filter(Boolean);
+                        console.log({
+                            portfolio: p.name,
+                            usernames,
                             currentUsername
-                            && getAllowedUsernamesFromPortfolio(p).includes(currentUsername)
-                        )
-                );
+                        });
+
+                        if (currentUsername && usernames.includes(currentUsername)) {
+                            restrictedPortfolios.push(p);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+                console.log("RESTRICTED PORTFOLIOS:", restrictedPortfolios);
 
                 setData(restrictedPortfolios);
 
@@ -62,9 +86,7 @@ export default function RestrictedPortfoliosPage() {
 
                 setOwners(
                     Object.fromEntries(
-                        ownerEntries.filter(
-                            (entry): entry is readonly [string, string] => Boolean(entry)
-                        )
+                        ownerEntries.filter((entry): entry is readonly [string, string] => Boolean(entry))
                     )
                 );
 
