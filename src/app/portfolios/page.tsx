@@ -361,31 +361,41 @@ export default function PortfoliosPage() {
 
                     <div className="flex flex-col md:flex-row gap-4">
 
-                        <input
-                            type="text"
-                            placeholder="Name"
-                            value={name}
-                            onChange={(e) => {
-                                setName(e.target.value);
-                                setCreateError("");
-                            }}
-                            className={`border rounded-xl p-3 flex-1 ${name.length >= 100 ? 'border-red-400' : ''}`}
-                            maxLength={100}
-                        />
-                        <div className={`text-xs mt-1 ${name.length >= 100 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{name.length}/100</div>
+                        <div className="flex-1">
+                            <div className="flex justify-end">
+                                <div className={`text-xs ${name.length >= 100 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{name.length}/100</div>
+                            </div>
 
-                        <input
-                            type="text"
-                            placeholder="Description"
-                            value={description}
-                            onChange={(e) => {
-                                setDescription(e.target.value);
-                                setCreateError("");
-                            }}
-                            className={`border rounded-xl p-3 flex-1 ${description.length >= 250 ? 'border-red-400' : ''}`}
-                            maxLength={250}
-                        />
-                        <div className={`text-xs mt-1 ${description.length >= 250 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{description.length}/250</div>
+                            <input
+                                type="text"
+                                placeholder="Name"
+                                value={name}
+                                onChange={(e) => {
+                                    setName(e.target.value);
+                                    setCreateError("");
+                                }}
+                                className={`border rounded-xl p-3 w-full ${name.length >= 100 ? 'border-red-400' : ''}`}
+                                maxLength={100}
+                            />
+                        </div>
+
+                        <div className="flex-1">
+                            <div className="flex justify-end">
+                                <div className={`text-xs ${description.length >= 250 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{description.length}/250</div>
+                            </div>
+
+                            <input
+                                type="text"
+                                placeholder="Description"
+                                value={description}
+                                onChange={(e) => {
+                                    setDescription(e.target.value);
+                                    setCreateError("");
+                                }}
+                                className={`border rounded-xl p-3 w-full ${description.length >= 250 ? 'border-red-400' : ''}`}
+                                maxLength={250}
+                            />
+                        </div>
 
                         <div className="flex items-center gap-3">
                             <div className="inline-flex rounded-xl bg-gray-100 p-1">
