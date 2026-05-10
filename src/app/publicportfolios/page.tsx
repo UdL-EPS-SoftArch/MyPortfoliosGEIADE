@@ -14,14 +14,24 @@ export default function PublicPortfoliosPage() {
 
         const service = new PortfolioService(clientAuthProvider());
 
-        service.getPortfolios()
-            .then((portfolios) => {
+        const getCurrentUsername = async () => {
+            const auth = await clientAuthProvider().getAuth();
+            return auth ? atob(auth.replace("Basic ", "")).split(":")[0] : null;
+        };
 
-                const publicPortfolios = portfolios.filter(
-                    (p) => p.visibility === "PUBLIC"
+        Promise.all([service.getPortfolios(), getCurrentUsername()])
+            .then(([portfolios, currentUsername]) => {
+
+                const visiblePortfolios = portfolios.filter(
+                    (p) =>
+                        p.visibility === "PUBLIC"
+                        || (
+                            p.visibility === "RESTRICTED"
+                            && Boolean(currentUsername && p.restrictedUsernames?.includes(currentUsername))
+                        )
                 );
 
-                setData(publicPortfolios);
+                setData(visiblePortfolios);
 
             })
             .catch(console.error)
@@ -38,11 +48,11 @@ export default function PublicPortfoliosPage() {
 
                     <div>
                         <h1 className="text-4xl font-bold text-gray-900">
-                            Public Portfolios
+                            Shared Portfolios
                         </h1>
 
                         <p className="text-gray-500 mt-2">
-                            Discover public portfolios shared by the community.
+                            Discover public portfolios and restricted portfolios shared with you.
                         </p>
                     </div>
 
@@ -70,11 +80,11 @@ export default function PublicPortfoliosPage() {
 
                     <div className="bg-white border rounded-2xl p-12 text-center shadow-sm">
                         <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-                            No public portfolios
+                            No shared portfolios
                         </h2>
 
                         <p className="text-gray-500">
-                            There are currently no public portfolios available.
+                            There are currently no portfolios available for your account.
                         </p>
                     </div>
 
@@ -100,8 +110,14 @@ export default function PublicPortfoliosPage() {
                                                 {p.name}
                                             </h2>
 
-                                            <span className="inline-block mt-2 bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
-                                                PUBLIC
+                                            <span
+                                                className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${
+                                                    p.visibility === "RESTRICTED"
+                                                        ? "bg-amber-100 text-amber-700"
+                                                        : "bg-green-100 text-green-700"
+                                                }`}
+                                            >
+                                                {p.visibility}
                                             </span>
                                         </div>
 
