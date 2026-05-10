@@ -9,6 +9,7 @@ export default function PublicPortfoliosPage() {
 
     const [data, setData] = useState<Portfolio[]>([]);
     const [loading, setLoading] = useState(true);
+    const [owners, setOwners] = useState<Record<string, string>>({});
 
     useEffect(() => {
 
@@ -22,6 +23,29 @@ export default function PublicPortfoliosPage() {
                 );
 
                 setData(publicPortfolios);
+
+                // Fetch owner username for each public portfolio (if owner link exists)
+                (async () => {
+                    for (const p of publicPortfolios) {
+                        try {
+                            const ownerHref = p.link && typeof p.link === 'function' ? p.link("owner")?.href : undefined;
+                            if (!ownerHref) continue;
+
+                            const res = await fetch(ownerHref);
+                            if (!res.ok) continue;
+
+                            const json = await res.json();
+                            const username = json?.username;
+                            if (username) {
+                                const key = p.uri || ownerHref;
+                                setOwners((prev) => ({ ...prev, [key]: username }));
+                            }
+                        } catch (err) {
+                            // ignore individual owner fetch errors
+                            console.error('Failed to fetch owner for', p.uri, err);
+                        }
+                    }
+                })();
 
             })
             .catch(console.error)
@@ -99,6 +123,10 @@ export default function PublicPortfoliosPage() {
                                             <h2 className="text-2xl font-bold text-gray-900">
                                                 {p.name}
                                             </h2>
+
+                                            <p className="text-sm text-gray-500 mt-2">
+                                                By {owners[p.uri || ''] || "Unknown"}
+                                            </p>
 
                                             <span className="inline-block mt-2 bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
                                                 PUBLIC
