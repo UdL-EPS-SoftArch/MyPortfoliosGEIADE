@@ -5,7 +5,7 @@ import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from "@/types/portfolio";
 import { clientAuthProvider } from "@/lib/authProvider";
 
-export default function PublicPortfoliosPage() {
+export default function RestrictedPortfoliosPage() {
 
     const [data, setData] = useState<Portfolio[]>([]);
     const [loading, setLoading] = useState(true);
@@ -14,6 +14,7 @@ export default function PublicPortfoliosPage() {
     useEffect(() => {
 
         const service = new PortfolioService(clientAuthProvider());
+
         const getPortfolioKey = (portfolio: Portfolio) =>
             (typeof portfolio.link === "function" ? portfolio.link("self")?.href : undefined)
             || portfolio.uri
@@ -25,10 +26,10 @@ export default function PublicPortfoliosPage() {
         };
 
         const getAllowedUsernamesFromPortfolio = (portfolio: Portfolio) => {
-            const raw: any[] = (portfolio as any).allowedUsers ?? (portfolio as any).restrictedUsernames ?? [];
+            const raw: any[] = (portfolio as any).allowedUsers ?? [];
             return raw.map((u) => {
-                if (typeof u !== 'string') return '';
-                const parts = u.split('/').filter(Boolean);
+                if (typeof u !== "string") return "";
+                const parts = u.split("/").filter(Boolean);
                 return parts.length ? parts[parts.length - 1] : u;
             }).filter(Boolean);
         };
@@ -36,19 +37,19 @@ export default function PublicPortfoliosPage() {
         Promise.all([service.getPortfolios(), getCurrentUsername()])
             .then(async ([portfolios, currentUsername]) => {
 
-                const visiblePortfolios = portfolios.filter(
+                const restrictedPortfolios = portfolios.filter(
                     (p) =>
-                        p.visibility === "PUBLIC"
-                        || (
-                            p.visibility === "RESTRICTED"
-                            && Boolean(currentUsername && getAllowedUsernamesFromPortfolio(p).includes(currentUsername))
+                        p.visibility === "RESTRICTED"
+                        && Boolean(
+                            currentUsername
+                            && getAllowedUsernamesFromPortfolio(p).includes(currentUsername)
                         )
                 );
 
-                setData(visiblePortfolios);
+                setData(restrictedPortfolios);
 
                 const ownerEntries = await Promise.all(
-                    visiblePortfolios.map(async (portfolio) => {
+                    restrictedPortfolios.map(async (portfolio) => {
                         try {
                             const owner = await service.getPortfolioOwner(portfolio);
                             return [getPortfolioKey(portfolio), owner.username] as const;
@@ -60,7 +61,11 @@ export default function PublicPortfoliosPage() {
                 );
 
                 setOwners(
-                    Object.fromEntries(ownerEntries.filter((entry): entry is readonly [string, string] => Boolean(entry)))
+                    Object.fromEntries(
+                        ownerEntries.filter(
+                            (entry): entry is readonly [string, string] => Boolean(entry)
+                        )
+                    )
                 );
 
             })
@@ -78,11 +83,11 @@ export default function PublicPortfoliosPage() {
 
                     <div>
                         <h1 className="text-4xl font-bold text-gray-900">
-                            Public Portfolios
+                            Restricted Portfolios
                         </h1>
 
                         <p className="text-gray-500 mt-2">
-                            Discover public portfolios and restricted portfolios shared with you.
+                            Portfolios shared privately with you.
                         </p>
                     </div>
 
@@ -110,11 +115,11 @@ export default function PublicPortfoliosPage() {
 
                     <div className="bg-white border rounded-2xl p-12 text-center shadow-sm">
                         <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-                            No shared portfolios
+                            No restricted portfolios
                         </h2>
 
                         <p className="text-gray-500">
-                            There are currently no portfolios available for your account.
+                            No restricted portfolios have been shared with you.
                         </p>
                     </div>
 
@@ -129,7 +134,7 @@ export default function PublicPortfoliosPage() {
                                 className="bg-white rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                             >
 
-                                <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500" />
+                                <div className="h-2 bg-gradient-to-r from-amber-500 to-orange-500" />
 
                                 <div className="p-6">
 
@@ -140,13 +145,8 @@ export default function PublicPortfoliosPage() {
                                                 {p.name}
                                             </h2>
 
-                                            <span
-                                                className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${p.visibility === "RESTRICTED"
-                                                        ? "bg-amber-100 text-amber-700"
-                                                        : "bg-green-100 text-green-700"
-                                                    }`}
-                                            >
-                                                {p.visibility}
+                                            <span className="inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-700">
+                                                RESTRICTED
                                             </span>
 
                                             <p className="text-sm text-gray-500 mt-2">

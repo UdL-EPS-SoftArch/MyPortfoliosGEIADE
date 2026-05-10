@@ -89,7 +89,7 @@ export default function PortfoliosPage() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [visibility, setVisibility] = useState<PortfolioVisibility>("PUBLIC");
-    const [restrictedUsernames, setRestrictedUsernames] = useState<string[]>([]);
+    const [allowedUsers, setAllowedUsers] = useState<string[]>([]);
     const [createError, setCreateError] = useState("");
     const [, setLoading] = useState(false);
     const [sharedPortfolioHrefs, setSharedPortfolioHrefs] = useState<Set<string>>(new Set());
@@ -101,7 +101,7 @@ export default function PortfoliosPage() {
     const [editName, setEditName] = useState("");
     const [editDescription, setEditDescription] = useState("");
     const [editVisibility, setEditVisibility] = useState<PortfolioVisibility>("PUBLIC");
-    const [editRestrictedUsernames, setEditRestrictedUsernames] = useState<string[]>([]);
+    const [editAllowedUsers, setEditAllowedUsers] = useState<string[]>([]);
     const [updatingPortfolioHref, setUpdatingPortfolioHref] = useState<string | null>(null);
     const visibilityOptions: PortfolioVisibility[] = ["PUBLIC", "PRIVATE", "RESTRICTED"];
 
@@ -111,6 +111,22 @@ export default function PortfoliosPage() {
         || portfolio.name, []);
 
     const getUsernameFromAuth = (auth: string) => atob(auth.replace("Basic ", "")).split(":")[0];
+
+    const getAllowedUsernamesFromPortfolio = (portfolio: Portfolio) => {
+        // support both new `allowedUsers` and legacy `restrictedUsernames` fields,
+        // and accept either plain usernames or Spring Data REST URIs like /users/{username}
+        const raw: any[] = (portfolio as any).allowedUsers ?? (portfolio as any).restrictedUsernames ?? [];
+        return raw.map((u) => {
+            if (typeof u !== 'string') return '';
+            try {
+                // if URI, return last segment
+                const parts = u.split('/').filter(Boolean);
+                return parts.length ? parts[parts.length - 1] : u;
+            } catch {
+                return u;
+            }
+        }).filter(Boolean);
+    };
 
     const loadPortfolios = useCallback(async () => {
         const service = new PortfolioService(clientAuthProvider());
@@ -125,9 +141,10 @@ export default function PortfoliosPage() {
         const ownedPortfolioHrefs = new Set(ownedPortfolios.map(getPortfolioHref));
         const sharedRestrictedPortfolios = allPortfolios.filter((portfolio) => {
             const href = getPortfolioHref(portfolio);
+            const allowed = getAllowedUsernamesFromPortfolio(portfolio);
             return (
                 portfolio.visibility === "RESTRICTED"
-                && portfolio.restrictedUsernames?.includes(username)
+                && allowed.includes(username)
                 && !ownedPortfolioHrefs.has(href)
             );
         });
@@ -157,8 +174,8 @@ export default function PortfoliosPage() {
             return;
         }
 
-        if (visibility === "RESTRICTED" && restrictedUsernames.length === 0) {
-            setCreateError("Add at least one username for a restricted portfolio.");
+        if (visibility === "RESTRICTED" && allowedUsers.length === 0) {
+            setCreateError("Add at least one user for a restricted portfolio.");
             return;
         }
 
@@ -178,7 +195,8 @@ export default function PortfoliosPage() {
                     name: name.trim(),
                     description: description.trim(),
                     visibility,
-                    restrictedUsernames: visibility === "RESTRICTED" ? restrictedUsernames : []
+                    // send Spring Data REST compatible user URIs when restricted
+                    allowedUsers: visibility === "RESTRICTED" ? allowedUsers.map(u => `/users/${u}`) : []
                 })
             });
 
@@ -192,7 +210,7 @@ export default function PortfoliosPage() {
             setName("");
             setDescription("");
             setVisibility("PUBLIC");
-            setRestrictedUsernames([]);
+            setAllowedUsers([]);
             setShowForm(false);
 
         } catch (err) {
@@ -247,7 +265,7 @@ export default function PortfoliosPage() {
         setEditName(portfolio.name);
         setEditDescription(portfolio.description || "");
         setEditVisibility(portfolio.visibility || "PRIVATE");
-        setEditRestrictedUsernames(portfolio.restrictedUsernames ?? []);
+        setEditAllowedUsers(getAllowedUsernamesFromPortfolio(portfolio));
         setActiveMenuHref(null);
     };
 
@@ -256,13 +274,13 @@ export default function PortfoliosPage() {
         setEditName("");
         setEditDescription("");
         setEditVisibility("PUBLIC");
-        setEditRestrictedUsernames([]);
+        setEditAllowedUsers([]);
     };
 
     const handleUpdate = async (portfolio: Portfolio) => {
         const href = getPortfolioHref(portfolio);
 
-        if (editVisibility === "RESTRICTED" && editRestrictedUsernames.length === 0) {
+        if (editVisibility === "RESTRICTED" && editAllowedUsers.length === 0) {
             window.alert("Añade al menos un usuario para un portfolio restringido.");
             return;
         }
@@ -275,7 +293,8 @@ export default function PortfoliosPage() {
                 name: editName,
                 description: editDescription,
                 visibility: editVisibility,
-                restrictedUsernames: editVisibility === "RESTRICTED" ? editRestrictedUsernames : [],
+                // send Spring Data REST compatible user URIs when restricted
+                allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers.map(u => `/users/${u}`) : [],
             });
 
             setData((currentData) =>
@@ -285,7 +304,7 @@ export default function PortfoliosPage() {
                             name: editName,
                             description: editDescription,
                             visibility: editVisibility,
-                            restrictedUsernames: editVisibility === "RESTRICTED" ? editRestrictedUsernames : [],
+                            allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers : [],
                             modified: new Date(),
                         })
                         : item
@@ -294,7 +313,7 @@ export default function PortfoliosPage() {
             handleCancelEdit();
         } catch (err) {
             console.error(err);
-            window.alert("No se ha podido editar el portfolio.");
+            window.alert("Could not update the portfolio. Please try again.");
         } finally {
             setUpdatingPortfolioHref(null);
         }
@@ -421,9 +440,9 @@ export default function PortfoliosPage() {
                             <div className="flex-1 pl-3">
                                 <p className="text-xs text-gray-500 mb-2 pl-3">Select the users with access</p>
                                 <RestrictedUsernamesInput
-                                    usernames={restrictedUsernames}
+                                    usernames={allowedUsers}
                                     onChange={(usernames) => {
-                                        setRestrictedUsernames(usernames);
+                                        setAllowedUsers(usernames);
                                         setCreateError("");
                                     }}
                                 />
@@ -506,7 +525,7 @@ export default function PortfoliosPage() {
                                             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-50"
                                         >
                                             <Pencil size={16} />
-                                            Editar
+                                            Edit
                                         </button>
 
                                         <button
@@ -516,7 +535,7 @@ export default function PortfoliosPage() {
                                             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <Trash2 size={16} />
-                                            {isDeleting ? "Eliminando..." : "Eliminar"}
+                                            {isDeleting ? "Deleting..." : "Delete"}
                                         </button>
                                     </div>
                                 )}
@@ -565,8 +584,8 @@ export default function PortfoliosPage() {
                                                     <div className="pl-3">
                                                         <p className="text-xs text-gray-500 mb-2 pl-3">Select the users with access</p>
                                                         <RestrictedUsernamesInput
-                                                            usernames={editRestrictedUsernames}
-                                                            onChange={setEditRestrictedUsernames}
+                                                            usernames={editAllowedUsers}
+                                                            onChange={setEditAllowedUsers}
                                                         />
                                                     </div>
                                                 )}
@@ -589,9 +608,9 @@ export default function PortfoliosPage() {
                                                     {p.visibility}
                                                 </span>
 
-                                                {p.visibility === "RESTRICTED" && p.restrictedUsernames?.length ? (
+                                                {p.visibility === "RESTRICTED" && getAllowedUsernamesFromPortfolio(p).length ? (
                                                     <p className="mt-2 text-xs text-gray-500">
-                                                        Visible for: {p.restrictedUsernames.join(", ")}
+                                                        Visible for: {getAllowedUsernamesFromPortfolio(p).join(", ")}
                                                     </p>
                                                 ) : null}
 
@@ -683,12 +702,12 @@ export default function PortfoliosPage() {
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <h2 id="delete-portfolio-title" className="text-xl font-bold text-gray-900">
-                                Delete portfolio
-                            </h2>
+                                    Delete portfolio
+                                </h2>
 
-                            <p className="mt-2 text-sm text-gray-600">
-                                Are you sure you want to delete &quot;{portfolioToDelete.name}&quot;?
-                            </p>
+                                <p className="mt-2 text-sm text-gray-600">Are you sure you want to delete</p>
+
+                                <p className="mt-1 text-sm font-semibold text-gray-900 break-words whitespace-normal">{portfolioToDelete.name}</p>
                         </div>
 
                         <button
