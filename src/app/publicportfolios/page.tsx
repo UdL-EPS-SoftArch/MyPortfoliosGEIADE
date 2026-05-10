@@ -69,7 +69,7 @@ export default function PublicPortfoliosPage() {
 
                     <div>
                         <h1 className="text-4xl font-bold text-gray-900">
-                            Shared Portfolios
+                            Public Portfolios
                         </h1>
 
                         <p className="text-gray-500 mt-2">
@@ -127,16 +127,15 @@ export default function PublicPortfoliosPage() {
                                     <div className="flex justify-between items-start mb-4">
 
                                         <div>
-                                            <h2 className="text-2xl font-bold text-gray-900">
+                                            <h2 className="text-2xl font-bold text-gray-900 break-words whitespace-normal max-w-full">
                                                 {p.name}
                                             </h2>
 
                                             <span
-                                                className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${
-                                                    p.visibility === "RESTRICTED"
+                                                className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${p.visibility === "RESTRICTED"
                                                         ? "bg-amber-100 text-amber-700"
                                                         : "bg-green-100 text-green-700"
-                                                }`}
+                                                    }`}
                                             >
                                                 {p.visibility}
                                             </span>
@@ -148,7 +147,7 @@ export default function PublicPortfoliosPage() {
 
                                     </div>
 
-                                    <p className="text-gray-600 leading-relaxed min-h-[80px]">
+                                    <p className="text-gray-600 leading-relaxed whitespace-normal break-words min-h-[80px]">
                                         {p.description || "No description available."}
                                     </p>
 
