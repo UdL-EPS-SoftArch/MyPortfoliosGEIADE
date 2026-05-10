@@ -127,7 +127,7 @@ export default function PublicPortfoliosPage() {
                                     <div className="flex justify-between items-start mb-4">
 
                                         <div>
-                                            <h2 className="text-2xl font-bold text-gray-900 break-words whitespace-normal max-w-full">
+                                            <h2 className="text-2xl font-bold text-gray-900 break-words break-all whitespace-normal w-full">
                                                 {p.name}
                                             </h2>
 
