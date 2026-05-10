@@ -9,10 +9,15 @@ export default function PublicPortfoliosPage() {
 
     const [data, setData] = useState<Portfolio[]>([]);
     const [loading, setLoading] = useState(true);
+    const [owners, setOwners] = useState<Record<string, string>>({});
 
     useEffect(() => {
 
         const service = new PortfolioService(clientAuthProvider());
+        const getPortfolioKey = (portfolio: Portfolio) =>
+            (typeof portfolio.link === "function" ? portfolio.link("self")?.href : undefined)
+            || portfolio.uri
+            || portfolio.name;
 
         const getCurrentUsername = async () => {
             const auth = await clientAuthProvider().getAuth();
@@ -20,7 +25,7 @@ export default function PublicPortfoliosPage() {
         };
 
         Promise.all([service.getPortfolios(), getCurrentUsername()])
-            .then(([portfolios, currentUsername]) => {
+            .then(async ([portfolios, currentUsername]) => {
 
                 const visiblePortfolios = portfolios.filter(
                     (p) =>
@@ -32,6 +37,22 @@ export default function PublicPortfoliosPage() {
                 );
 
                 setData(visiblePortfolios);
+
+                const ownerEntries = await Promise.all(
+                    visiblePortfolios.map(async (portfolio) => {
+                        try {
+                            const owner = await service.getPortfolioOwner(portfolio);
+                            return [getPortfolioKey(portfolio), owner.username] as const;
+                        } catch (err) {
+                            console.error("Failed to fetch owner for", portfolio.uri, err);
+                            return null;
+                        }
+                    })
+                );
+
+                setOwners(
+                    Object.fromEntries(ownerEntries.filter((entry): entry is readonly [string, string] => Boolean(entry)))
+                );
 
             })
             .catch(console.error)
@@ -95,7 +116,7 @@ export default function PublicPortfoliosPage() {
                         {data.map((p: Portfolio, index: number) => (
 
                             <div
-                                key={index}
+                                key={(typeof p.link === "function" ? p.link("self")?.href : undefined) || p.uri || index}
                                 className="bg-white rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                             >
 
@@ -119,6 +140,10 @@ export default function PublicPortfoliosPage() {
                                             >
                                                 {p.visibility}
                                             </span>
+
+                                            <p className="text-sm text-gray-500 mt-2">
+                                                By {owners[(typeof p.link === "function" ? p.link("self")?.href : undefined) || p.uri || p.name] || "Unknown"}
+                                            </p>
                                         </div>
 
                                     </div>
