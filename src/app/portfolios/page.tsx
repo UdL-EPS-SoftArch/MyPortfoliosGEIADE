@@ -294,7 +294,7 @@ export default function PortfoliosPage() {
                 description: editDescription,
                 visibility: editVisibility,
                 // send Spring Data REST compatible user URIs when restricted
-                allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers.map(u => `http://localhost:8080/users/${u}`) : [],
+                allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers.map(u => `/users/${u}`) : [],
             });
 
             setData((currentData) =>
