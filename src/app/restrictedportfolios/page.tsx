@@ -5,7 +5,7 @@ import { PortfolioService } from "@/api/portfolioApi";
 import { Portfolio } from "@/types/portfolio";
 import { clientAuthProvider } from "@/lib/authProvider";
 
-export default function PublicPortfoliosPage() {
+export default function RestrictedPortfoliosPage() {
 
     const [data, setData] = useState<Portfolio[]>([]);
     const [loading, setLoading] = useState(true);
@@ -14,6 +14,7 @@ export default function PublicPortfoliosPage() {
     useEffect(() => {
 
         const service = new PortfolioService(clientAuthProvider());
+
         const getPortfolioKey = (portfolio: Portfolio) =>
             (typeof portfolio.link === "function" ? portfolio.link("self")?.href : undefined)
             || portfolio.uri
@@ -24,31 +25,55 @@ export default function PublicPortfoliosPage() {
             return auth ? atob(auth.replace("Basic ", "")).split(":")[0] : null;
         };
 
-        const getAllowedUsernamesFromPortfolio = (portfolio: Portfolio) => {
-            const raw: any[] = (portfolio as any).allowedUsers ?? (portfolio as any).restrictedUsernames ?? [];
-            return raw.map((u) => {
-                if (typeof u !== 'string') return '';
-                const parts = u.split('/').filter(Boolean);
-                return parts.length ? parts[parts.length - 1] : u;
-            }).filter(Boolean);
-        };
+        Promise.all([service.getPortfolios(), clientAuthProvider().getAuth()])
+            .then(async ([portfolios, auth]) => {
+                const currentUsername = auth ? atob(auth.replace("Basic ", "")).split(":")[0] : null;
+                console.log("CURRENT USERNAME:", currentUsername);
 
-        Promise.all([service.getPortfolios(), getCurrentUsername()])
-            .then(async ([portfolios, currentUsername]) => {
+                const restrictedPortfolios: Portfolio[] = [];
 
-                const visiblePortfolios = portfolios.filter(
-                    (p) =>
-                        p.visibility === "PUBLIC"
-                        || (
-                            p.visibility === "RESTRICTED"
-                            && Boolean(currentUsername && getAllowedUsernamesFromPortfolio(p).includes(currentUsername))
-                        )
-                );
+                for (const p of portfolios) {
+                    if (p.visibility !== "RESTRICTED") continue;
 
-                setData(visiblePortfolios);
+                    try {
+                        const allowedUsersLink =
+                            (typeof p.link === 'function' ? p.link('allowedUsers')?.href : undefined)
+                            || (p as any)._links?.allowedUsers?.[0]?.href;
+                        if (!allowedUsersLink) continue;
+
+                        const response = await fetch(allowedUsersLink, {
+                            headers: {
+                                ...(auth ? { Authorization: auth } : {})
+                            }
+                        });
+                        if (!response.ok) {
+                            console.warn(`allowedUsers fetch failed for ${p.name}:`, response.status, response.statusText);
+                            // skip this portfolio if allowedUsers endpoint fails
+                            continue;
+                        }
+
+                        const json = await response.json();
+                        const creators = json?._embedded?.creators ?? [];
+                        const usernames = creators.map((u: any) => u.username).filter(Boolean);
+                        console.log({
+                            portfolio: p.name,
+                            usernames,
+                            currentUsername
+                        });
+
+                        if (currentUsername && usernames.includes(currentUsername)) {
+                            restrictedPortfolios.push(p);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+                console.log("RESTRICTED PORTFOLIOS:", restrictedPortfolios);
+
+                setData(restrictedPortfolios);
 
                 const ownerEntries = await Promise.all(
-                    visiblePortfolios.map(async (portfolio) => {
+                    restrictedPortfolios.map(async (portfolio) => {
                         try {
                             const owner = await service.getPortfolioOwner(portfolio);
                             return [getPortfolioKey(portfolio), owner.username] as const;
@@ -60,7 +85,9 @@ export default function PublicPortfoliosPage() {
                 );
 
                 setOwners(
-                    Object.fromEntries(ownerEntries.filter((entry): entry is readonly [string, string] => Boolean(entry)))
+                    Object.fromEntries(
+                        ownerEntries.filter((entry): entry is readonly [string, string] => Boolean(entry))
+                    )
                 );
 
             })
@@ -78,11 +105,11 @@ export default function PublicPortfoliosPage() {
 
                     <div>
                         <h1 className="text-4xl font-bold text-gray-900">
-                            Public Portfolios
+                            Restricted Portfolios
                         </h1>
 
                         <p className="text-gray-500 mt-2">
-                            Discover public portfolios and restricted portfolios shared with you.
+                            Portfolios shared privately with you.
                         </p>
                     </div>
 
@@ -110,11 +137,11 @@ export default function PublicPortfoliosPage() {
 
                     <div className="bg-white border rounded-2xl p-12 text-center shadow-sm">
                         <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-                            No shared portfolios
+                            No restricted portfolios
                         </h2>
 
                         <p className="text-gray-500">
-                            There are currently no portfolios available for your account.
+                            No restricted portfolios have been shared with you.
                         </p>
                     </div>
 
@@ -129,7 +156,7 @@ export default function PublicPortfoliosPage() {
                                 className="bg-white rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                             >
 
-                                <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500" />
+                                <div className="h-2 bg-gradient-to-r from-amber-500 to-orange-500" />
 
                                 <div className="p-6">
 
@@ -140,13 +167,8 @@ export default function PublicPortfoliosPage() {
                                                 {p.name}
                                             </h2>
 
-                                            <span
-                                                className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${p.visibility === "RESTRICTED"
-                                                        ? "bg-amber-100 text-amber-700"
-                                                        : "bg-green-100 text-green-700"
-                                                    }`}
-                                            >
-                                                {p.visibility}
+                                            <span className="inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-700">
+                                                RESTRICTED
                                             </span>
 
                                             <p className="text-sm text-gray-500 mt-2">

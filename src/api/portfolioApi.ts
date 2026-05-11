@@ -56,6 +56,8 @@ export class PortfolioService {
             name: string;
             description?: string;
             visibility?: PortfolioVisibility;
+            restrictedUsernames?: string[];
+            allowedUsers: string[];
         }
     ): Promise<void> {
         const href =

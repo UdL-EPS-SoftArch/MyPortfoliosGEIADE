@@ -15,6 +15,7 @@ export default function Navbar() {
         { href: "/projects", label: "Projects", roles: ["ROLE_USER", "ROLE_CREATOR"] },
         { href: "/projects/explore", label: "Explore Projects" },
         { href: "/publicportfolios", label: "Public Portfolios" },
+        { href: "/restrictedportfolios", label: "Restricted Portfolios", roles: ["ROLE_USER", "ROLE_CREATOR"] },
         { href: "/portfolios", label: "My Portfolios", roles: ["ROLE_USER", "ROLE_CREATOR"] },
         { href: "/users", label: "Users", roles: ["ROLE_USER", "ROLE_ADMIN"] },
         { href: "/tags", label: "Tags", roles: ["ROLE_USER", "ROLE_ADMIN"] },

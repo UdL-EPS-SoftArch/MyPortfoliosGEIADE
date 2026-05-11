@@ -1,20 +1,98 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useState } from "react";
 import { PortfolioService } from "@/api/portfolioApi";
-import { Portfolio } from '@/types/portfolio';
+import { Portfolio, PortfolioVisibility } from '@/types/portfolio';
 import { clientAuthProvider } from '@/lib/authProvider';
 import { User } from '@/types/user';
 import { EllipsisVertical, Pencil, Trash2, X } from "lucide-react";
+
+const parseUsernames = (value: string) =>
+    value
+        .split(/[\s,;]+/)
+        .map((username) => username.trim())
+        .filter((username, index, usernames) => username && usernames.indexOf(username) === index);
+
+const mergeUsernames = (currentUsernames: string[], newUsernames: string[]) => [
+    ...currentUsernames,
+    ...newUsernames.filter((username) => !currentUsernames.includes(username)),
+];
+
+function RestrictedUsernamesInput({
+    usernames,
+    onChange,
+}: {
+    usernames: string[];
+    onChange: (usernames: string[]) => void;
+}) {
+    const [draftUsername, setDraftUsername] = useState("");
+
+    const addDraftUsernames = () => {
+        const parsedUsernames = parseUsernames(draftUsername);
+        if (parsedUsernames.length === 0) return;
+
+        onChange(mergeUsernames(usernames, parsedUsernames));
+        setDraftUsername("");
+    };
+
+    const removeUsername = (usernameToRemove: string) => {
+        onChange(usernames.filter((username) => username !== usernameToRemove));
+    };
+
+    const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter" || event.key === "," || event.key === ";") {
+            event.preventDefault();
+            addDraftUsernames();
+            return;
+        }
+
+        if (event.key === "Backspace" && !draftUsername && usernames.length > 0) {
+            onChange(usernames.slice(0, -1));
+        }
+    };
+
+    return (
+        <div className="flex min-h-12 flex-1 flex-wrap items-center gap-2 rounded-xl border bg-white p-2">
+            {usernames.map((username) => (
+                <span
+                    key={username}
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800"
+                >
+                    {username}
+                    <button
+                        type="button"
+                        aria-label={`Remove ${username}`}
+                        onClick={() => removeUsername(username)}
+                        className="rounded-full p-0.5 text-amber-700 transition hover:bg-amber-200"
+                    >
+                        <X size={14} />
+                    </button>
+                </span>
+            ))}
+
+            <input
+                type="text"
+                placeholder={usernames.length ? "Add another username" : "Ex: user1, user2, user3"}
+                value={draftUsername}
+                onBlur={addDraftUsernames}
+                onChange={(event) => setDraftUsername(event.target.value)}
+                onKeyDown={handleKeyDown}
+                className="min-w-40 flex-1 border-0 bg-transparent p-1 text-sm text-gray-900 outline-none"
+            />
+        </div>
+    );
+}
 
 export default function PortfoliosPage() {
     const [data, setData] = useState<Portfolio[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
+    const [visibility, setVisibility] = useState<PortfolioVisibility>("PUBLIC");
+    const [allowedUsers, setAllowedUsers] = useState<string[]>([]);
     const [createError, setCreateError] = useState("");
     const [, setLoading] = useState(false);
+    const [sharedPortfolioHrefs, setSharedPortfolioHrefs] = useState<Set<string>>(new Set());
     const [activeMenuHref, setActiveMenuHref] = useState<string | null>(null);
     const [portfolioToDelete, setPortfolioToDelete] = useState<Portfolio | null>(null);
     const [deleteError, setDeleteError] = useState("");
@@ -22,31 +100,82 @@ export default function PortfoliosPage() {
     const [editingPortfolioHref, setEditingPortfolioHref] = useState<string | null>(null);
     const [editName, setEditName] = useState("");
     const [editDescription, setEditDescription] = useState("");
+    const [editVisibility, setEditVisibility] = useState<PortfolioVisibility>("PUBLIC");
+    const [editAllowedUsers, setEditAllowedUsers] = useState<string[]>([]);
     const [updatingPortfolioHref, setUpdatingPortfolioHref] = useState<string | null>(null);
+    const visibilityOptions: PortfolioVisibility[] = ["PUBLIC", "PRIVATE", "RESTRICTED"];
 
-    const getPortfolioHref = (portfolio: Portfolio) =>
+    const getPortfolioHref = useCallback((portfolio: Portfolio) =>
         (typeof portfolio.link === "function" ? portfolio.link("self")?.href : undefined)
         || portfolio.uri
-        || portfolio.name;
+        || portfolio.name, []);
 
-    useEffect(() => {
+    const getUsernameFromAuth = (auth: string) => atob(auth.replace("Basic ", "")).split(":")[0];
+
+    const getAllowedUsernamesFromPortfolio = (portfolio: Portfolio) => {
+        // support both new `allowedUsers` and legacy `restrictedUsernames` fields,
+        // and accept either plain usernames or Spring Data REST URIs like /users/{username}
+        const raw: any[] = (portfolio as any).allowedUsers ?? (portfolio as any).restrictedUsernames ?? [];
+        return raw.map((u) => {
+            if (typeof u !== 'string') return '';
+            try {
+                // if URI, return last segment
+                const parts = u.split('/').filter(Boolean);
+                return parts.length ? parts[parts.length - 1] : u;
+            } catch {
+                return u;
+            }
+        }).filter(Boolean);
+    };
+
+    const loadPortfolios = useCallback(async () => {
         const service = new PortfolioService(clientAuthProvider());
+        const auth = await clientAuthProvider().getAuth();
+        if (!auth) return;
 
-        clientAuthProvider().getAuth().then(auth => {
-            if (!auth) return;
-
-            const username = atob(auth.replace("Basic ", "")).split(":")[0];
-
-            service.getPortfoliosByOwner({ uri: `/users/${username}` } as User)
-                .then(setData)
-                .catch(console.error);
+        const username = getUsernameFromAuth(auth);
+        const [ownedPortfolios, allPortfolios] = await Promise.all([
+            service.getPortfoliosByOwner({ uri: `/users/${username}` } as User),
+            service.getPortfolios(),
+        ]);
+        const ownedPortfolioHrefs = new Set(ownedPortfolios.map(getPortfolioHref));
+        const sharedRestrictedPortfolios = allPortfolios.filter((portfolio) => {
+            const href = getPortfolioHref(portfolio);
+            const allowed = getAllowedUsernamesFromPortfolio(portfolio);
+            return (
+                portfolio.visibility === "RESTRICTED"
+                && allowed.includes(username)
+                && !ownedPortfolioHrefs.has(href)
+            );
         });
 
-    }, []);
+        setSharedPortfolioHrefs(new Set(sharedRestrictedPortfolios.map(getPortfolioHref)));
+        setData([...ownedPortfolios, ...sharedRestrictedPortfolios]);
+    }, [getPortfolioHref]);
+
+    useEffect(() => {
+        loadPortfolios().catch(console.error);
+
+    }, [loadPortfolios]);
 
     const handleCreate = async () => {
         if (!name.trim() || !description.trim()) {
             setCreateError("Name and description are required.");
+            return;
+        }
+
+        if (name.trim().length > 100) {
+            setCreateError("Name must be at most 100 characters.");
+            return;
+        }
+
+        if (description.trim().length > 250) {
+            setCreateError("Description must be at most 250 characters.");
+            return;
+        }
+
+        if (visibility === "RESTRICTED" && allowedUsers.length === 0) {
+            setCreateError("Add at least one user for a restricted portfolio.");
             return;
         }
 
@@ -65,7 +194,9 @@ export default function PortfoliosPage() {
                 body: JSON.stringify({
                     name: name.trim(),
                     description: description.trim(),
-                    visibility
+                    visibility,
+                    // send Spring Data REST compatible user URIs when restricted
+                    allowedUsers: visibility === "RESTRICTED" ? allowedUsers.map(u => `http://localhost:8080/users/${u}`) : []
                 })
             });
 
@@ -74,20 +205,12 @@ export default function PortfoliosPage() {
                 return;
             }
 
-                const service = new PortfolioService(clientAuthProvider());
-                const auth2 = await clientAuthProvider().getAuth();
-                if (auth2) {
-                    const username = atob(auth2.replace("Basic ", "")).split(":")[0];
-                    const portfolios = await service.getPortfoliosByOwner({ uri: `/users/${username}` } as User);
-                    setData(portfolios);
-                } else {
-                    const portfolios = await service.getPortfolios();
-                    setData(portfolios);
-                }
+            await loadPortfolios();
 
             setName("");
             setDescription("");
             setVisibility("PUBLIC");
+            setAllowedUsers([]);
             setShowForm(false);
 
         } catch (err) {
@@ -141,6 +264,8 @@ export default function PortfoliosPage() {
         setEditingPortfolioHref(getPortfolioHref(portfolio));
         setEditName(portfolio.name);
         setEditDescription(portfolio.description || "");
+        setEditVisibility(portfolio.visibility || "PRIVATE");
+        setEditAllowedUsers(getAllowedUsernamesFromPortfolio(portfolio));
         setActiveMenuHref(null);
     };
 
@@ -148,10 +273,17 @@ export default function PortfoliosPage() {
         setEditingPortfolioHref(null);
         setEditName("");
         setEditDescription("");
+        setEditVisibility("PUBLIC");
+        setEditAllowedUsers([]);
     };
 
     const handleUpdate = async (portfolio: Portfolio) => {
         const href = getPortfolioHref(portfolio);
+
+        if (editVisibility === "RESTRICTED" && editAllowedUsers.length === 0) {
+            window.alert("Añade al menos un usuario para un portfolio restringido.");
+            return;
+        }
 
         try {
             setUpdatingPortfolioHref(href);
@@ -160,7 +292,9 @@ export default function PortfoliosPage() {
             await service.updatePortfolio(portfolio, {
                 name: editName,
                 description: editDescription,
-                visibility: portfolio.visibility,
+                visibility: editVisibility,
+                // send Spring Data REST compatible user URIs when restricted
+                allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers.map(u => `/users/${u}`) : [],
             });
 
             setData((currentData) =>
@@ -169,6 +303,8 @@ export default function PortfoliosPage() {
                         ? Object.assign(item, {
                             name: editName,
                             description: editDescription,
+                            visibility: editVisibility,
+                            allowedUsers: editVisibility === "RESTRICTED" ? editAllowedUsers : [],
                             modified: new Date(),
                         })
                         : item
@@ -177,7 +313,7 @@ export default function PortfoliosPage() {
             handleCancelEdit();
         } catch (err) {
             console.error(err);
-            window.alert("No se ha podido editar el portfolio.");
+            window.alert("Could not update the portfolio. Please try again.");
         } finally {
             setUpdatingPortfolioHref(null);
         }
@@ -242,49 +378,76 @@ export default function PortfoliosPage() {
                         </button>
                     </div>
 
-                    <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
 
-                        <input
-                            type="text"
-                            placeholder="Name"
-                            value={name}
-                            onChange={(e) => {
-                                setName(e.target.value);
-                                setCreateError("");
-                            }}
-                            className="border rounded-xl p-3 flex-1"
-                        />
+                        <div className="flex-1">
+                            <div className="flex justify-end pr-3">
+                                <div className={`text-xs ${name.length >= 100 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{name.length}/100</div>
+                            </div>
 
-                        <input
-                            type="text"
-                            placeholder="Description"
-                            value={description}
-                            onChange={(e) => {
-                                setDescription(e.target.value);
-                                setCreateError("");
-                            }}
-                            className="border rounded-xl p-3 flex-1"
-                        />
+                            <input
+                                type="text"
+                                placeholder="Name"
+                                value={name}
+                                onChange={(e) => {
+                                    setName(e.target.value);
+                                    setCreateError("");
+                                }}
+                                className={`border rounded-xl p-3 w-full ${name.length >= 100 ? 'border-red-400' : ''}`}
+                                maxLength={100}
+                            />
+                        </div>
+
+                            <div className="flex-1">
+                            <div className="flex justify-end pr-3">
+                                <div className={`text-xs ${description.length >= 250 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>{description.length}/250</div>
+                            </div>
+
+                            <input
+                                type="text"
+                                placeholder="Description"
+                                value={description}
+                                onChange={(e) => {
+                                    setDescription(e.target.value);
+                                    setCreateError("");
+                                }}
+                                className={`border rounded-xl p-3 w-full ${description.length >= 250 ? 'border-red-400' : ''}`}
+                                maxLength={250}
+                            />
+                        </div>
 
                         <div className="flex items-center gap-3">
                             <div className="inline-flex rounded-xl bg-gray-100 p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setVisibility("PUBLIC")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PUBLIC" ? "bg-white shadow text-green-700" : "text-gray-600"}`}
-                                >
-                                    PUBLIC
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setVisibility("PRIVATE")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${visibility === "PRIVATE" ? "bg-white shadow text-blue-700" : "text-gray-600"}`}
-                                >
-                                    PRIVATE
-                                </button>
+                                {visibilityOptions.map((option) => (
+                                    <button
+                                        key={option}
+                                        type="button"
+                                        onClick={() => {
+                                            setVisibility(option);
+                                            setCreateError("");
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                                            visibility === option ? "bg-white shadow text-blue-700" : "text-gray-600"
+                                        }`}
+                                    >
+                                        {option}
+                                    </button>
+                                ))}
                             </div>
                         </div>
+
+                        {visibility === "RESTRICTED" && (
+                            <div className="flex-1 pl-3">
+                                <p className="text-xs text-gray-500 mb-2 pl-3">Select the users with access</p>
+                                <RestrictedUsernamesInput
+                                    usernames={allowedUsers}
+                                    onChange={(usernames) => {
+                                        setAllowedUsers(usernames);
+                                        setCreateError("");
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         <button
                             type="button"
@@ -328,6 +491,7 @@ export default function PortfoliosPage() {
                         const isDeleting = deletingPortfolioHref === portfolioHref;
                         const isEditing = editingPortfolioHref === portfolioHref;
                         const isUpdating = updatingPortfolioHref === portfolioHref;
+                        const isSharedPortfolio = sharedPortfolioHrefs.has(portfolioHref);
 
                         return (
 
@@ -338,6 +502,7 @@ export default function PortfoliosPage() {
 
                             <div className="h-2 rounded-t-2xl bg-gradient-to-r from-blue-500 to-indigo-500" />
 
+                            {!isSharedPortfolio && (
                             <div className="absolute right-4 top-4 z-10">
                                 <button
                                     type="button"
@@ -360,7 +525,7 @@ export default function PortfoliosPage() {
                                             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-50"
                                         >
                                             <Pencil size={16} />
-                                            Editar
+                                            Edit
                                         </button>
 
                                         <button
@@ -370,11 +535,12 @@ export default function PortfoliosPage() {
                                             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <Trash2 size={16} />
-                                            {isDeleting ? "Eliminando..." : "Eliminar"}
+                                            {isDeleting ? "Deleting..." : "Delete"}
                                         </button>
                                     </div>
                                 )}
                             </div>
+                            )}
 
                             <div className="p-6">
 
@@ -396,10 +562,37 @@ export default function PortfoliosPage() {
                                                     onChange={(e) => setEditDescription(e.target.value)}
                                                     className="w-full rounded-xl border p-3 text-gray-900"
                                                 />
+
+                                                <div className="inline-flex rounded-xl bg-gray-100 p-1">
+                                                    {visibilityOptions.map((option) => (
+                                                        <button
+                                                            key={option}
+                                                            type="button"
+                                                            onClick={() => setEditVisibility(option)}
+                                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition ${
+                                                                editVisibility === option
+                                                                    ? "bg-white shadow text-blue-700"
+                                                                    : "text-gray-600"
+                                                            }`}
+                                                        >
+                                                            {option}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {editVisibility === "RESTRICTED" && (
+                                                    <div className="pl-3">
+                                                        <p className="text-xs text-gray-500 mb-2 pl-3">Select the users with access</p>
+                                                        <RestrictedUsernamesInput
+                                                            usernames={editAllowedUsers}
+                                                            onChange={setEditAllowedUsers}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <>
-                                                <h2 className="text-2xl font-bold text-gray-900">
+                                                <h2 className="text-2xl font-bold text-gray-900 break-words whitespace-normal max-w-full">
                                                     {p.name}
                                                 </h2>
 
@@ -407,11 +600,25 @@ export default function PortfoliosPage() {
                                                     className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${
                                                         p.visibility === "PUBLIC"
                                                             ? "bg-green-100 text-green-700"
+                                                            : p.visibility === "RESTRICTED"
+                                                                ? "bg-amber-100 text-amber-700"
                                                             : "bg-blue-100 text-blue-700"
                                                     }`}
                                                 >
                                                     {p.visibility}
                                                 </span>
+
+                                                {p.visibility === "RESTRICTED" && getAllowedUsernamesFromPortfolio(p).length ? (
+                                                    <p className="mt-2 text-xs text-gray-500">
+                                                        Visible for: {getAllowedUsernamesFromPortfolio(p).join(", ")}
+                                                    </p>
+                                                ) : null}
+
+                                                {isSharedPortfolio ? (
+                                                    <p className="mt-2 text-xs font-semibold text-amber-700">
+                                                        Shared with you
+                                                    </p>
+                                                ) : null}
                                             </>
                                         )}
                                     </div>
@@ -438,7 +645,7 @@ export default function PortfoliosPage() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <p className="text-gray-600 leading-relaxed min-h-[80px]">
+                                    <p className="text-gray-600 leading-relaxed whitespace-normal break-words min-h-[80px]">
                                         {p.description || "No description available."}
                                     </p>
                                 )}
@@ -495,12 +702,12 @@ export default function PortfoliosPage() {
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <h2 id="delete-portfolio-title" className="text-xl font-bold text-gray-900">
-                                Delete portfolio
-                            </h2>
+                                    Delete portfolio
+                                </h2>
 
-                            <p className="mt-2 text-sm text-gray-600">
-                                Are you sure you want to delete &quot;{portfolioToDelete.name}&quot;?
-                            </p>
+                                <p className="mt-2 text-sm text-gray-600">Are you sure you want to delete</p>
+
+                                <p className="mt-1 text-sm font-semibold text-gray-900 break-words whitespace-normal">{portfolioToDelete.name}</p>
                         </div>
 
                         <button
